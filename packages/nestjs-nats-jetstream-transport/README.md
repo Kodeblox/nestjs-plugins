@@ -93,6 +93,10 @@ You are now ready to publish and consume events on the stream. See the [code exa
 - **orderedConsumer**: boolean - a specialized push consumer that puts together flow control, heartbeats, and additional logic to handle message gaps. Ordered consumers cannot operate on a queue and cannot be durable.
 - **deliverGroup**: string - when set will only deliver messages to subscriptions matching that group.
 - **headersOnly**: boolean - configures the consumer to only deliver existing header and the `Nats-Msg-Size` header, no bodies.
+- **backoff**: number[] - Array of durations (in nanoseconds) that represent a retry timescale for NaK'd messages or those being normally retried.
+- **filterSubjects**: string[] - Array of subjects to filter messages from. This is exclusive of `filterSubject`.
+- **memStorage**: boolean - Force the consumer state to be kept in memory rather than inherit the setting from the stream.
+- **inactiveThreshold**: number - Duration (in nanoseconds) that instructs the server to clean up ephemeral consumers that are inactive for that long.
 
 ### NatsConnectionOptions
 

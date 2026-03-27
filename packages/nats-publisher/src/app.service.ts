@@ -1,11 +1,11 @@
 import {
   NatsJetStreamRecordBuilder,
   NatsRequestOptionsBuilder,
-} from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+} from '@kodeblox/nestjs-nats-jetstream-transport';
 import {
   NatsJetStreamClientProxy,
   NatsJetStreamRecord,
-} from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+} from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Injectable } from '@nestjs/common';
 import { Events, JetStreamPublishOptions, PubAck, headers } from 'nats';
 import { async } from 'rxjs';

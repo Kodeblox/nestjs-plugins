@@ -18,7 +18,7 @@ Build Event Driven Microservices Architecture with Nats JetStream Server and Nes
 ```bash
 npm i @nestjs/microservices
 npm i nats
-npm i @nestjs-plugins/nestjs-nats-jetstream-transport
+npm i @kodeblox/nestjs-nats-jetstream-transport
 ```
 
 ## 🐳 Running Nats Jetstream server in Docker
@@ -183,7 +183,7 @@ You are now ready to publish and consume events on the stream. See the [code exa
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { NatsJetStreamTransport } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamTransport } from '@kodeblox/nestjs-nats-jetstream-transport';
 
 @Module({
   imports: [
@@ -203,7 +203,7 @@ export class AppModule {}
 ```typescript
 // app.service.ts
 
-import { NatsJetStreamClientProxy } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamClientProxy } from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Injectable } from '@nestjs/common';
 import { PubAck } from 'nats';
 import { Observable } from 'rxjs';
@@ -269,7 +269,7 @@ export class AppService {
 ```typescript
 // app.controller.ts
 
-import { NatsJetStreamContext } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamContext } from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Controller, Get } from '@nestjs/common';
 import {
   Ctx,
@@ -352,7 +352,7 @@ export class AppController {
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { CustomStrategy } from '@nestjs/microservices';
-import { NatsJetStreamServer } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamServer } from '@kodeblox/nestjs-nats-jetstream-transport';
 
 async function bootstrap() {
   const options: CustomStrategy = {

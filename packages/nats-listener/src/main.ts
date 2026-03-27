@@ -6,7 +6,7 @@ import { CustomStrategy } from '@nestjs/microservices';
 import {
   NatsJetStreamServer,
   NatsStreamConfig,
-} from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+} from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Logger } from '@nestjs/common';
 import { DebugEvents, RetentionPolicy } from 'nats';
 

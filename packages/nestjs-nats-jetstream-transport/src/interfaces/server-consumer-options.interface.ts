@@ -35,4 +35,8 @@ export interface ServerConsumerOptions {
   orderedConsumer?: boolean;
   deliverGroup?: string;
   headersOnly?: boolean;
+  backoff?: number[];
+  filterSubjects?: string[];
+  memStorage?: boolean;
+  inactiveThreshold?: number;
 }

@@ -16,9 +16,11 @@ export function serverConsumerOptionsBuilder(
     description,
     durable,
     filterSubject,
+    filterSubjects,
     flowControl,
     headersOnly,
     idleHeartbeat,
+    inactiveThreshold,
     limit,
     maxAckPending,
     maxDeliver,
@@ -30,9 +32,18 @@ export function serverConsumerOptionsBuilder(
     startAtTimeDelta,
     startSequence,
     startTime,
+    backoff,
+    memStorage,
   } = serverConsumerOptions;
 
-  const opts = consumerOpts();
+  const config = {
+    ...(backoff && { backoff }),
+    ...(inactiveThreshold && { inactive_threshold: inactiveThreshold }),
+    ...(memStorage && { mem_storage: memStorage }),
+    ...(filterSubjects && { filter_subjects: filterSubjects }),
+  };
+
+  const opts = consumerOpts(config);
 
   deliverGroup && opts.deliverGroup(deliverGroup);
   ackWait && opts.ackWait(ackWait);

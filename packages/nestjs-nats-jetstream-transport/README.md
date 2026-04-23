@@ -18,7 +18,7 @@ Build Event Driven Microservices Architecture with Nats JetStream Server and Nes
 ```bash
 npm i @nestjs/microservices
 npm i nats
-npm i @nestjs-plugins/nestjs-nats-jetstream-transport
+npm i @kodeblox/nestjs-nats-jetstream-transport
 ```
 
 ## 🐳 Running Nats Jetstream server in Docker
@@ -93,6 +93,10 @@ You are now ready to publish and consume events on the stream. See the [code exa
 - **orderedConsumer**: boolean - a specialized push consumer that puts together flow control, heartbeats, and additional logic to handle message gaps. Ordered consumers cannot operate on a queue and cannot be durable.
 - **deliverGroup**: string - when set will only deliver messages to subscriptions matching that group.
 - **headersOnly**: boolean - configures the consumer to only deliver existing header and the `Nats-Msg-Size` header, no bodies.
+- **backoff**: number[] - Array of durations (in nanoseconds) that represent a retry timescale for NaK'd messages or those being normally retried.
+- **filterSubjects**: string[] - Array of subjects to filter messages from. This is exclusive of `filterSubject`.
+- **memStorage**: boolean - Force the consumer state to be kept in memory rather than inherit the setting from the stream.
+- **inactiveThreshold**: number - Duration (in nanoseconds) that instructs the server to clean up ephemeral consumers that are inactive for that long.
 
 ### NatsConnectionOptions
 
@@ -179,7 +183,7 @@ You are now ready to publish and consume events on the stream. See the [code exa
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { NatsJetStreamTransport } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamTransport } from '@kodeblox/nestjs-nats-jetstream-transport';
 
 @Module({
   imports: [
@@ -199,7 +203,7 @@ export class AppModule {}
 ```typescript
 // app.service.ts
 
-import { NatsJetStreamClientProxy } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamClientProxy } from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Injectable } from '@nestjs/common';
 import { PubAck } from 'nats';
 import { Observable } from 'rxjs';
@@ -265,7 +269,7 @@ export class AppService {
 ```typescript
 // app.controller.ts
 
-import { NatsJetStreamContext } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamContext } from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Controller, Get } from '@nestjs/common';
 import {
   Ctx,
@@ -348,7 +352,7 @@ export class AppController {
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { CustomStrategy } from '@nestjs/microservices';
-import { NatsJetStreamServer } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamServer } from '@kodeblox/nestjs-nats-jetstream-transport';
 
 async function bootstrap() {
   const options: CustomStrategy = {

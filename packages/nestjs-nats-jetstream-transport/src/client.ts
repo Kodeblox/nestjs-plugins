@@ -3,8 +3,6 @@ import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import {
   Codec,
   connect,
-  headers,
-  JetStreamPublishOptions,
   JSONCodec,
   NatsConnection,
   RequestOptions,

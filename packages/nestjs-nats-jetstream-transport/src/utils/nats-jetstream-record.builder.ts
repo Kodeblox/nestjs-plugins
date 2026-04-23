@@ -1,4 +1,4 @@
-import { JetStreamPublishOptions, MsgHdrs, headers } from 'nats';
+import { JetStreamPublishOptions, headers } from 'nats';
 
 export class NatsJetStreamRecord<TData = any> {
   constructor(

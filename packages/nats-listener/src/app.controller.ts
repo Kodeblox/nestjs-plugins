@@ -1,4 +1,4 @@
-import { NatsJetStreamContext } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+import { NatsJetStreamContext } from '@kodeblox/nestjs-nats-jetstream-transport';
 import { Controller, Get } from '@nestjs/common';
 import {
   Ctx,

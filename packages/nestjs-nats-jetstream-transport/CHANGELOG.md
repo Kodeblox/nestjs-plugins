@@ -3,23 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [1.4.5-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.4.4...@nestjs-plugins/nestjs-nats-jetstream-transport@1.4.5-pre.0) (2023-07-13)
+## [1.4.5-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.4.4...@kodeblox/nestjs-nats-jetstream-transport@1.4.5-pre.0) (2023-07-13)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
-
-
-
-## [1.3.13-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.12...@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.13-pre.0) (2023-03-09)
-
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.3.5](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.4...@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.5) (2022-08-22)
+## [1.3.13-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.3.12...@kodeblox/nestjs-nats-jetstream-transport@1.3.13-pre.0) (2023-03-09)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
+
+
+
+
+
+## [1.3.5](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.3.4...@kodeblox/nestjs-nats-jetstream-transport@1.3.5) (2022-08-22)
 
 
 ### Bug Fixes
@@ -30,7 +30,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-## [1.3.4](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.3...@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.4) (2022-08-19)
+## [1.3.4](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.3.3...@kodeblox/nestjs-nats-jetstream-transport@1.3.4) (2022-08-19)
 
 
 ### Bug Fixes
@@ -41,135 +41,135 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-## [1.3.3](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.3-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.3) (2022-08-19)
+## [1.3.3](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.3.3-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.3.3) (2022-08-19)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.3.3-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.2...@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.3-pre.0) (2022-08-19)
+## [1.3.3-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.3.2...@kodeblox/nestjs-nats-jetstream-transport@1.3.3-pre.0) (2022-08-19)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-# [1.3.0-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.2.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.3.0-pre.0) (2022-03-25)
+# [1.3.0-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.2.0...@kodeblox/nestjs-nats-jetstream-transport@1.3.0-pre.0) (2022-03-25)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.7](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.7) (2021-12-06)
+## [1.1.7](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.6...@kodeblox/nestjs-nats-jetstream-transport@1.1.7) (2021-12-06)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.6](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6-pre.2...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6) (2021-12-06)
+## [1.1.6](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.6-pre.2...@kodeblox/nestjs-nats-jetstream-transport@1.1.6) (2021-12-06)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.6-pre.2](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6-pre.1...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6-pre.2) (2021-12-06)
+## [1.1.6-pre.2](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.6-pre.1...@kodeblox/nestjs-nats-jetstream-transport@1.1.6-pre.2) (2021-12-06)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.6-pre.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6-pre.1) (2021-12-06)
+## [1.1.6-pre.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.6-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.6-pre.1) (2021-12-06)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.6-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.4-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.6-pre.0) (2021-12-05)
+## [1.1.6-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.4-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.6-pre.0) (2021-12-05)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.5](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.4...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.5) (2021-12-05)
+## [1.1.5](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.4...@kodeblox/nestjs-nats-jetstream-transport@1.1.5) (2021-12-05)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.4](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.4-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.4) (2021-12-04)
+## [1.1.4](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.4-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.4) (2021-12-04)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.4-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.2...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.4-pre.0) (2021-12-04)
+## [1.1.4-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.2...@kodeblox/nestjs-nats-jetstream-transport@1.1.4-pre.0) (2021-12-04)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.3](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.2...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3) (2021-12-02)
+## [1.1.3](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.2...@kodeblox/nestjs-nats-jetstream-transport@1.1.3) (2021-12-02)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.3-pre.2](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.1...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.2) (2021-12-02)
+## [1.1.3-pre.2](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.1...@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.2) (2021-12-02)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.3-pre.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.1) (2021-12-01)
+## [1.1.3-pre.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.1) (2021-12-01)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.3-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.2-pre.1...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.3-pre.0) (2021-12-01)
+## [1.1.3-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.2-pre.1...@kodeblox/nestjs-nats-jetstream-transport@1.1.3-pre.0) (2021-12-01)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.2](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.2-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.2) (2021-11-30)
+## [1.1.2](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.2-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.2) (2021-11-30)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.1.2-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.0-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.2-pre.0) (2021-11-30)
+## [1.1.2-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.0-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.2-pre.0) (2021-11-30)
 
 
 ### Bug Fixes
@@ -180,7 +180,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-## [1.1.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.1) (2021-11-30)
+## [1.1.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.1) (2021-11-30)
 
 
 ### Bug Fixes
@@ -191,15 +191,15 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-# [1.1.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.0-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.0) (2021-11-29)
+# [1.1.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.1.0-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.1.0) (2021-11-29)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
-# [1.1.0-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.12-pre.1...@nestjs-plugins/nestjs-nats-jetstream-transport@1.1.0-pre.0) (2021-11-29)
+
+
+# [1.1.0-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.12-pre.1...@kodeblox/nestjs-nats-jetstream-transport@1.1.0-pre.0) (2021-11-29)
 
 
 ### Features
@@ -210,81 +210,81 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-## [1.0.12-pre.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.12-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.12-pre.1) (2021-11-29)
+## [1.0.12-pre.1](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.12-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.12-pre.1) (2021-11-29)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
-
-
-
-## [1.0.12-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.11-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.12-pre.0) (2021-11-29)
-
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.0.11](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.11-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.11) (2021-11-25)
+## [1.0.12-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.11-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.12-pre.0) (2021-11-29)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
-
-
-
-## [1.0.11-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.10-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.11-pre.0) (2021-11-25)
-
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.0.10](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.10-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.10) (2021-11-25)
+## [1.0.11](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.11-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.11) (2021-11-25)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
-
-
-
-## [1.0.10-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.6-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.10-pre.0) (2021-11-24)
-
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.0.9](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.8...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.9) (2021-11-24)
+## [1.0.11-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.10-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.11-pre.0) (2021-11-25)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
-
-
-
-## [1.0.8](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.7...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.8) (2021-11-24)
-
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
 
 
-## [1.0.7](https://github.com/Redningsselskapet/nestjs-plugins/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.6...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.7) (2021-11-24)
+## [1.0.10](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.10-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.10) (2021-11-25)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
-
-
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
-## [1.0.6](https://github.com/Redningsselskapet/nestjs-nats-jetstream-transport/compare/@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.6-pre.0...@nestjs-plugins/nestjs-nats-jetstream-transport@1.0.6) (2021-11-24)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+
+## [1.0.10-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.6-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.10-pre.0) (2021-11-24)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
+
+
+
+
+
+## [1.0.9](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.8...@kodeblox/nestjs-nats-jetstream-transport@1.0.9) (2021-11-24)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
+
+
+
+
+
+## [1.0.8](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.7...@kodeblox/nestjs-nats-jetstream-transport@1.0.8) (2021-11-24)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
+
+
+
+
+
+## [1.0.7](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.6...@kodeblox/nestjs-nats-jetstream-transport@1.0.7) (2021-11-24)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
+
+
+
+
+
+## [1.0.6](https://github.com/Redningsselskapet/nestjs-nats-jetstream-transport/compare/@kodeblox/nestjs-nats-jetstream-transport@1.0.6-pre.0...@kodeblox/nestjs-nats-jetstream-transport@1.0.6) (2021-11-24)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
 
 
 
@@ -292,4 +292,4 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## 1.0.6-pre.0 (2021-11-24)
 
-**Note:** Version bump only for package @nestjs-plugins/nestjs-nats-jetstream-transport
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport

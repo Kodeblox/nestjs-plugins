@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {
   NatsJetStreamTransport,
-} from '@nestjs-plugins/nestjs-nats-jetstream-transport';
+} from '@kodeblox/nestjs-nats-jetstream-transport';
 import { headers } from 'nats';
 
 @Module({
@@ -21,7 +21,7 @@ import { headers } from 'nats';
       //   expect: {
       //     streamName: 'my-stream',
       //     lastSubjectSequence: 0,
-        
+
       // },
     }),
   ],

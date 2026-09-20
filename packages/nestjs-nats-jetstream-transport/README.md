@@ -16,10 +16,11 @@ Build Event Driven Microservices Architecture with Nats JetStream Server and Nes
 ## 📦 Install
 
 ```bash
-npm i @nestjs/microservices
-npm i nats
-npm i @kodeblox/nestjs-nats-jetstream-transport
+npm i @kodeblox/nestjs-nats-jetstream-transport @nestjs/microservices
 ```
+
+The transport requires `@nestjs/microservices` alongside the `@nestjs/common` and `@nestjs/core` packages every NestJS app already has.
+`nats`, `rxjs` and `reflect-metadata` are installed automatically as dependencies of this package.
 
 ## 🐳 Running Nats Jetstream server in Docker
 

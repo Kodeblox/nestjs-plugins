@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.2.8](https://github.com/Kodeblox/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@2.2.7...@kodeblox/nestjs-nats-jetstream-transport@2.2.8) (2026-09-20)
+
+**Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport
+
+
+
+
+
 ## [1.4.5-pre.0](https://github.com/Redningsselskapet/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@1.4.4...@kodeblox/nestjs-nats-jetstream-transport@1.4.5-pre.0) (2023-07-13)
 
 **Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport

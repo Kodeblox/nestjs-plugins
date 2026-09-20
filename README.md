@@ -27,11 +27,31 @@ It runs `lerna version --conventional-commits` and pushes the version commit and
 
 ### Publish
 
-1. Create an npm automation token that can publish to the `@kodeblox` scope and store it as the `NPM_TOKEN` repository secret.
-2. Create a GitHub Release for the version tag that the bump produced, or run the `Publish` workflow manually from the Actions tab.
+Create a GitHub Release for the version tag that the bump produced, or run the `Publish` workflow manually from the Actions tab.
 
-The `Publish` workflow installs with `npm ci` and runs `npm publish --workspace=@kodeblox/nestjs-nats-jetstream-transport`.
+The `Publish` workflow installs with `npm ci` and runs `npm publish --workspace=@kodeblox/nestjs-nats-jetstream-transport` on Node 24.
 `prepack` builds `dist` first, `publishConfig.access` is `public`, and npm refuses to overwrite a version that already exists on the registry.
+
+Authentication is whichever of these is configured:
+
+1. **Trusted publishing (preferred).** On npmjs.com open the package, then Settings -> Trusted publishing -> Add trusted publisher -> GitHub Actions:
+
+   - Organization or user: `Kodeblox`
+   - Repository: `nestjs-plugins`
+   - Workflow filename: `release.yaml`
+   - Environment: leave empty
+   - Allowed actions: allow `npm publish`. Publishers created after Sep 3 2026 default to `npm stage publish` only, and direct publishing is rejected unless this is enabled.
+
+   The workflow already requests `id-token: write`, so no secret is needed and provenance attestations are generated automatically.
+
+2. **Granular access token (fallback).** Create a granular access token on npmjs.com with Read and write access to the `@kodeblox` scope and Bypass 2FA enabled, then store it as the `NPM_TOKEN` repository secret:
+
+   ```bash
+   gh secret set NPM_TOKEN --repo Kodeblox/nestjs-plugins
+   ```
+
+   npm prefers trusted publishing when it is configured and falls back to `NPM_TOKEN` otherwise.
+   npm is deprecating bypass-2FA tokens with direct-publish access: direct publishing with a granular token stops working in January 2027, so plan on migrating to trusted publishing.
 
 ### Publish from your machine
 

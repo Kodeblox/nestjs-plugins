@@ -7,9 +7,13 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kodeblox/nestjs-plugins"
+    "url": "https://github.com/Kodeblox/nestjs-plugins",
+    "directory": "packages/nestjs-nats-jetstream-transport"
   },
   "keywords": [
     "nestjs",
@@ -24,8 +28,9 @@
   ],
   "scripts": {
     "test": "exit 0",
-    "build": "rimraf dist && tsc",
-    "watch": "tsc -w",
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "watch": "tsc -w -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
@@ -46,6 +51,5 @@
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "typescript": "^4.4.4"
-  },
-  "gitHead": "9e421b9dc56d345d607c19f74570164e08679224"
+  }
 }

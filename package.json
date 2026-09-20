@@ -9,6 +9,11 @@
       "**/nestjs-nats-jetstream-transport/**"
     ]
   },
+  "scripts": {
+    "build": "npm run build --workspace=@kodeblox/nestjs-nats-jetstream-transport",
+    "pack:jetstream": "npm pack --workspace=@kodeblox/nestjs-nats-jetstream-transport --dry-run",
+    "publish:jetstream": "npm publish --workspace=@kodeblox/nestjs-nats-jetstream-transport"
+  },
   "devDependencies": {
     "lerna": "^7.1.1"
   }

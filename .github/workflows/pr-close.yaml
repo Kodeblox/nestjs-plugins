@@ -1,36 +1,56 @@
+name: Bump versions
+
 on:
-  pull_request:
-   types: [closed]
+  push:
+    branches: [master]
+    paths:
+      - packages/nestjs-nats-jetstream-transport/**
+
+permissions:
+  contents: write
+
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
+
 jobs:
-  build:
-    env:
-      BUILD_ENV: staging
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+  bump:
+    name: Bump changed packages
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          ref: master
           fetch-depth: 0
-          token: ${{ secrets.CI_REPOSITORY_ACCESS_TOKEN }}
+          fetch-tags: true
 
-      - name: Setup NodeJS 14
-        uses: actions/setup-node@v1
-        with:
-          node-version: 14
-
-      - name: Setup Git Config
+      - name: Check version baseline
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          
-      - name: Bump version on changed packages
-        run: |
-          npx lerna version --conventional-commits --conventional-prerelease --preid pre --no-push --force-git-tag -y
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          if ! git tag --list "@kodeblox/nestjs-nats-jetstream-transport@*" | grep -q .; then
+            echo "::error::No tag matches @kodeblox/nestjs-nats-jetstream-transport@*, so lerna would derive the bump from the entire package history."
+            echo "::error::Create the baseline tag once and push it:"
+            echo "::error::git tag -a @kodeblox/nestjs-nats-jetstream-transport@2.2.7 -m '@kodeblox/nestjs-nats-jetstream-transport@2.2.7' && git push origin @kodeblox/nestjs-nats-jetstream-transport@2.2.7"
+            exit 1
+          fi
 
-      - name: Push changes 
-        uses: ad-m/github-push-action@master
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          github_token: ${{ secrets.CI_REPOSITORY_ACCESS_TOKEN }}
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump versions from conventional commits
+        run: npx lerna version --conventional-commits --no-private --no-push --yes
+
+      - name: Push version commit and tags
+        run: git push --follow-tags origin master

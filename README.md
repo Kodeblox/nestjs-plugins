@@ -29,8 +29,16 @@ It runs `lerna version --conventional-commits` and pushes the version commit and
 
 Create a GitHub Release for the version tag that the bump produced, or run the `Publish` workflow manually from the Actions tab.
 
-The `Publish` workflow installs with `npm ci` and runs `npm publish --workspace=@kodeblox/nestjs-nats-jetstream-transport` on Node 24.
-`prepack` builds `dist` first, `publishConfig.access` is `public`, and npm refuses to overwrite a version that already exists on the registry.
+The `Publish` workflow installs with `npm ci`, builds `dist`, and runs `npm stage publish` in the package directory on Node 24, which submits the version to npm's staging area instead of publishing it directly.
+A maintainer then reviews and approves it with 2FA, either on npmjs.com under Staged Packages, or from the CLI:
+
+```bash
+npm stage list @kodeblox/nestjs-nats-jetstream-transport
+npm stage view <stage-id>
+npm stage approve <stage-id>   # prompts for the 2FA code
+```
+
+The version only becomes installable after that approval. `publishConfig.access` is `public`, and npm refuses to stage a version that already exists on the registry.
 
 Authentication is whichever of these is configured:
 
@@ -40,9 +48,10 @@ Authentication is whichever of these is configured:
    - Repository: `nestjs-plugins`
    - Workflow filename: `release.yaml`
    - Environment: leave empty
-   - Allowed actions: allow `npm publish`. Publishers created after Sep 3 2026 default to `npm stage publish` only, and direct publishing is rejected unless this is enabled.
+   - Allowed actions: leave `npm publish` unchecked and use `npm stage publish` only. Publishers created after Sep 3 2026 default to this, and it is the stricter option since every version needs a human approval.
 
-   The workflow already requests `id-token: write`, so no secret is needed and provenance attestations are generated automatically.
+   The workflow already requests `id-token: write`, so no secret is needed.
+   Note that `npm stage list`, `view`, `approve` and `reject` cannot use OIDC, since approving requires proof of presence, so those stay interactive.
 
 2. **Granular access token (fallback).** Create a granular access token on npmjs.com with Read and write access to the `@kodeblox` scope and Bypass 2FA enabled, then store it as the `NPM_TOKEN` repository secret:
 
@@ -52,11 +61,21 @@ Authentication is whichever of these is configured:
 
    npm prefers trusted publishing when it is configured and falls back to `NPM_TOKEN` otherwise.
    npm is deprecating bypass-2FA tokens with direct-publish access: direct publishing with a granular token stops working in January 2027, so plan on migrating to trusted publishing.
+   Once trusted publishing is confirmed working, npm recommends opening the package's Settings -> Publishing access and disallowing token publishing.
 
 ### Publish from your machine
 
 ```bash
 npm run pack:jetstream   # builds and prints the exact tarball contents
 npm login
+
+# either publish directly
 npm run publish:jetstream
+
+# or stage it and approve it yourself with 2FA
+cd packages/nestjs-nats-jetstream-transport
+npm stage publish
+npm stage approve <stage-id>
 ```
+
+`npm stage publish` requires npm CLI 11.15.0 or later, and `npm stage list|view|approve|reject` always require interactive authentication.

@@ -22,6 +22,40 @@ npm i @kodeblox/nestjs-nats-jetstream-transport @nestjs/microservices
 The transport requires `@nestjs/microservices` alongside the `@nestjs/common` and `@nestjs/core` packages every NestJS app already has.
 `nats`, `rxjs` and `reflect-metadata` are installed automatically as dependencies of this package.
 
+## 🧭 Setup: Nest ≤11 vs Nest 12
+
+### Nest 11 and below (legacy driver)
+
+```bash
+npm i @kodeblox/nestjs-nats-jetstream-transport
+```
+
+`nats@2` arrives with the plugin. Nothing else changes: the driver
+auto-resolves to `legacy`, the `stream` option is ignored (the stream is
+inferred server-side), and all existing code keeps working. You may pin
+`driver: 'legacy'` explicitly, but the default already does that when only
+`nats` is installed.
+
+### Nest 12 (modern driver)
+
+```bash
+npm i @kodeblox/nestjs-nats-jetstream-transport @nats-io/transport-node @nats-io/jetstream @nats-io/nats-core
+```
+
+Then make sure each handler's stream is known: set the `stream` server
+option, or configure exactly one stream via `streamConfig` (object or
+single-element array) so it is reused — otherwise `listen()` throws telling
+you which remedy to apply. `driver: 'modern'` pins the modern driver and
+fails fast with the install hint if the packages are missing; omitting it
+auto-resolves to modern whenever `@nats-io/transport-node` is present.
+
+Two caveats until the v3.0.0 release (Phase 4): `nats@2` is still a runtime
+dependency of the plugin, so it is installed transitively even in a Nest 12
+app — it is never loaded when the modern driver resolves, and you remove it
+for good by uninstalling it once v3 declares the drivers optional peers.
+And Nest 12 itself needs Node ≥20.19 or ≥22.12 (its ESM-only core is loaded
+via `require(esm)`).
+
 ## 🔀 Driver generations (Nest ≤11 / `nats` v2 and Nest 12 / NATS v3)
 
 All NATS access goes through an internal driver adapter behind the

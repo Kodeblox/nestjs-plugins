@@ -35,6 +35,14 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
   let fakeNc: any;
   let client: NatsJetStreamClientProxy;
 
+  const waitFor = async (cond: () => boolean, ms = 5000) => {
+    const start = Date.now();
+    while (!cond()) {
+      if (Date.now() - start > ms) throw new Error('waitFor timed out');
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  };
+
   beforeEach(() => {
     publish = jest.fn(async () => ({ stream: 'mystream', seq: 42, duplicate: false }));
     request = jest.fn(async () => ({
@@ -47,6 +55,9 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
       drain,
       isClosed: () => false,
       isDraining: () => false,
+      status: jest.fn(async function* () {
+        yield { type: 'reconnect', data: 'srv-status' };
+      }),
     };
     (connect as jest.Mock).mockReset().mockResolvedValue(fakeNc);
     client = new NatsJetStreamClientProxy({
@@ -239,5 +250,13 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
 
   it('on() accepts a status listener without throwing', () => {
     expect(() => client.on('status', () => undefined)).not.toThrow();
+  });
+
+  it('on() receives status events forwarded from the driver connection', async () => {
+    const seen: unknown[] = [];
+    client.on('reconnect', (data: unknown) => seen.push(data));
+    await client.connect();
+    await waitFor(() => seen.length >= 1);
+    expect(seen).toEqual(['srv-status']);
   });
 });

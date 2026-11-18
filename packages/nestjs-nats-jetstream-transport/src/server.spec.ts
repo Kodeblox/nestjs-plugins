@@ -125,6 +125,9 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
       drain: jest.fn(async () => undefined),
       isClosed: () => false,
       isDraining: () => false,
+      status: jest.fn(async function* () {
+        yield { type: 'reconnect', data: 'srv-status' };
+      }),
     };
     (connect as jest.Mock).mockReset().mockResolvedValue(fakeNc);
   });
@@ -354,5 +357,14 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
   it('on() accepts a status listener without throwing', () => {
     const server = makeServer();
     expect(() => server.on('status', () => undefined)).not.toThrow();
+  });
+
+  it('on() receives status events forwarded from the driver connection', async () => {
+    const server = makeServer();
+    const seen: unknown[] = [];
+    server.on('reconnect', (data: unknown) => seen.push(data));
+    await new Promise<void>((res) => server.listen(res));
+    await waitFor(() => seen.length >= 1);
+    expect(seen).toEqual(['srv-status']);
   });
 });

@@ -107,6 +107,13 @@ jobs:
           npm --version
           npm ls @nestjs/microservices nats @nats-io/transport-node @nats-io/jetstream jest ts-jest typescript --workspace=@kodeblox/nestjs-nats-jetstream-transport
 
+      # The version dump above is informational only; this assertion is the
+      # proof the modern cell actually runs Nest 12 (a silent fallback to
+      # ^11 would otherwise run a second legacy cell that still passes).
+      - name: Assert Nest ${{ matrix.nest }} cell resolution
+        working-directory: packages/nestjs-nats-jetstream-transport
+        run: node -e "const v=require('@nestjs/core/package.json').version; if(!v.startsWith('${{ matrix.nest }}.')){throw new Error('expected Nest ${{ matrix.nest }} but resolved '+v)}; console.log('Nest cell OK: '+v)"
+
       - name: Start JetStream server (named, with docker control)
         run: |
           docker run -d --name nats-main -p 4222:4222 nats:2-alpine -js -m 8222
@@ -124,12 +131,15 @@ jobs:
         working-directory: packages/nestjs-nats-jetstream-transport
         run: npm run test:unit
 
+      # test:integration:ci (not test:integration): the plain suite exits 0
+      # on a full skip, so the gate asserts zero skips from the --json
+      # summary and fails the step when tests did not actually run.
       - name: Integration tests (real server, both driver generations)
         working-directory: packages/nestjs-nats-jetstream-transport
         env:
           NATS_URL: nats://127.0.0.1:4222
           NATS_CONTAINER: nats-main
-        run: npm run test:integration
+        run: npm run test:integration:ci
 
       - name: Static gate — no load-time require('nats')
         working-directory: packages/nestjs-nats-jetstream-transport
@@ -147,3 +157,41 @@ jobs:
       - name: Stop JetStream server
         if: always()
         run: docker rm -f nats-main >/dev/null 2>&1 || true
+
+  # Solo-install smoke: both matrix cells install BOTH drivers and pin the
+  # driver explicitly, so no cell proves a consumer installing exactly one
+  # generation resolves and loads the plugin. This job packs the tarball
+  # and installs it in a fresh dir with only one generation (plus peers),
+  # then requires the entry and exercises resolveNatsDriver there. Needs
+  # no server: nothing connects.
+  solo-install:
+    name: solo-install (${{ matrix.generation }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - generation: legacy
+            node: '20'
+          - generation: modern
+            node: '24'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Solo-install smoke check (${{ matrix.generation }} driver only)
+        run: |
+          npm pack --workspace=@kodeblox/nestjs-nats-jetstream-transport --pack-destination "$RUNNER_TEMP" >/dev/null
+          TARBALL=$(ls "$RUNNER_TEMP"/*.tgz | head -1)
+          node packages/nestjs-nats-jetstream-transport/scripts/check-solo-install.js "$TARBALL" ${{ matrix.generation }}

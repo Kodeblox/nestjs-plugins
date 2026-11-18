@@ -349,6 +349,19 @@ describe('modern driver (fake driver boundary, no server)', () => {
     ).rejects.toThrow(/status metadata/);
   });
 
+  it('exposes the connection status stream for status forwarding', async () => {
+    const statuses = [{ type: 'reconnect', data: 'srv' }];
+    nc.status = jest.fn(async function* () {
+      yield* statuses;
+    });
+    const seen = [];
+    for await (const status of driver.status(nc)) {
+      seen.push(status);
+    }
+    expect(seen).toEqual(statuses);
+    expect(nc.status).toHaveBeenCalledTimes(1);
+  });
+
   it('subscribes core messages and adapts the callback to views', async () => {
     const seen: any[] = [];
     await driver.subscribeMessages(nc, 's', 'q', (err, msg) => {

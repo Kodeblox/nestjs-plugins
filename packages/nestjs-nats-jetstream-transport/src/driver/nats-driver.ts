@@ -59,6 +59,13 @@ export interface NatsDriver {
   close(connection: unknown): Promise<void>;
   isClosed(connection: unknown): boolean;
   isDraining(connection: unknown): boolean;
+  /**
+   * Live connection status stream, driver-neutral. Both drivers expose
+   * `status()` on their connections; client/server forward it into the
+   * status emitter behind `on()` so listeners keep receiving
+   * disconnect/reconnect/update events on either generation.
+   */
+  status(connection: unknown): AsyncIterable<unknown>;
   publish(
     connection: unknown,
     subject: string,

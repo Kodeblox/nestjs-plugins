@@ -71,4 +71,21 @@ describe('legacy driver loading (no server)', () => {
     expect(driver.isClosed(nc)).toBe(true);
     expect(driver.isDraining(nc)).toBe(false);
   });
+
+  it('exposes the connection status stream for status forwarding', async () => {
+    const { createLegacyDriver } = require('./legacy-driver');
+    const driver = createLegacyDriver();
+    const statuses = [{ type: 'reconnect', data: 'srv' }];
+    const nc = {
+      status: jest.fn(async function* () {
+        yield* statuses;
+      }),
+    };
+    const seen = [];
+    for await (const status of driver.status(nc)) {
+      seen.push(status);
+    }
+    expect(seen).toEqual(statuses);
+    expect(nc.status).toHaveBeenCalledTimes(1);
+  });
 });

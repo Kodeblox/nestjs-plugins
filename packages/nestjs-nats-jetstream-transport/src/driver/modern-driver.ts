@@ -116,6 +116,10 @@ export function createModernDriver(): NatsDriver {
       return (connection as NatsConnection).isDraining();
     },
 
+    status(connection: unknown): AsyncIterable<unknown> {
+      return (connection as NatsConnection).status();
+    },
+
     async publish(
       connection: unknown,
       subject: string,

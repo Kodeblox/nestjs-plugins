@@ -9,7 +9,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 * NATS drivers and NestJS packages are now (optional) peer dependencies. Install your generation explicitly: `nats@^2` for Nest ≤11, `@nats-io/transport-node` + `@nats-io/jetstream` + `@nats-io/nats-core` for Nest 12.
 * The public API no longer leaks driver types (`NatsJetStreamContext.message`, `connectedHook` argument). See the README migration guide for the driver-surface notes (`msg.json()`, removed `Events`/`DebugEvents` enums, `StringCodec`/`JSONCodec` removal).
-* `on()`/`unwrap()` are now implemented on the client and server (abstract on the Nest 11/12 base classes), returning the underlying driver-typed-as-`unknown` connection.
+* `on()`/`unwrap()` are now implemented on the client and server (abstract on the Nest 11/12 base classes). `unwrap()` returns the underlying driver-typed-as-`unknown` connection; `on()` receives the driver's live connection status stream (`disconnect` / `reconnect` / `update`), forwarded the same way on both generations.
 * The Node floor is per stack (legacy ≥18, modern ≥20.19 or ≥22.12), not global. Nest ≤10 is not claimed by v3 — stay on the `v2.x` maintenance line.
 
 ### Features

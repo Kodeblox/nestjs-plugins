@@ -112,7 +112,8 @@ jobs:
       # ^11 would otherwise run a second legacy cell that still passes).
       - name: Assert Nest ${{ matrix.nest }} cell resolution
         working-directory: packages/nestjs-nats-jetstream-transport
-        run: node -e "const v=require('@nestjs/core/package.json').version; if(!v.startsWith('${{ matrix.nest }}.')){throw new Error('expected Nest ${{ matrix.nest }} but resolved '+v)}; console.log('Nest cell OK: '+v)"
+        run: |
+          node -e "const v=require('@nestjs/core/package.json').version; if(!v.startsWith('${{ matrix.nest }}.')){throw new Error('expected Nest ${{ matrix.nest }} but resolved '+v)}; console.log('Nest cell OK: '+v)"
 
       - name: Start JetStream server (named, with docker control)
         run: |

@@ -1,41 +1,76 @@
 import { CustomTransportStrategy, Server } from '@nestjs/microservices';
-import {
-  Codec,
-  connect,
-  JetStreamManager,
-  JSONCodec,
-  NatsConnection,
-  SubscriptionOptions,
-} from 'nats';
 
 import { connectable, isObservable, Subject } from 'rxjs';
 import { NATS_JETSTREAM_TRANSPORT } from './constants';
 import { NatsJetStreamServerOptions } from './interfaces/nats-jetstream-server-options.interface';
-import { NatsContext, NatsJetStreamContext } from './nats-jetstream.context';
-import { serverConsumerOptionsBuilder } from './utils/server-consumer-options-builder';
+import type { NatsConnectionInfo } from './interfaces/nats-connection-options.interface';
+import {
+  NatsContext,
+  NatsJetStreamContext,
+  toJetStreamMessage,
+} from './nats-jetstream.context';
+import {
+  jsonPayloadCodec,
+  resolveDriver,
+  resolveStreamName,
+  type NatsDriver,
+} from './driver/nats-driver';
 
 export class NatsJetStreamServer
   extends Server
   implements CustomTransportStrategy
 {
   readonly transportId: symbol = NATS_JETSTREAM_TRANSPORT;
-  private nc: NatsConnection;
-  private codec: Codec<JSON>;
-  private jsm: JetStreamManager;
+  private connection: unknown;
+  private connecting: Promise<unknown> | null = null;
+  private driver: NatsDriver;
 
   constructor(private options: NatsJetStreamServerOptions) {
     super();
-    this.codec = JSONCodec();
   }
 
   async listen(callback: () => void) {
-    if (!this.nc) {
-      this.nc = await connect(this.options.connectionOptions);
-      if (this.options.connectionOptions.connectedHook) {
-        this.options.connectionOptions.connectedHook(this.nc);
+    const { driver, resolution } = resolveDriver(this.options.driver);
+    if (resolution.notice) {
+      this.logger.log(resolution.notice);
+    }
+    this.driver = driver;
+    if (!this.connection) {
+      // Share one in-flight connect so concurrent callers reuse a single
+      // connection (and run the hook once) instead of leaking a duplicate.
+      if (!this.connecting) {
+        this.connecting = (async () => {
+          const connection = await driver.connect(
+            this.options.connectionOptions,
+          );
+          this.connection = connection;
+          try {
+            if (this.options.connectionOptions.connectedHook) {
+              await this.options.connectionOptions.connectedHook(
+                connection as NatsConnectionInfo,
+              );
+            }
+          } catch (err) {
+            // Best-effort cleanup: the hook failed, so drain the dialed
+            // connection instead of orphaning it; the next listen() dials
+            // anew. Drain errors are swallowed — the hook failure propagates.
+            this.connection = undefined;
+            try {
+              await driver.close(connection);
+            } catch {
+              // ignore drain errors while propagating the hook failure
+            }
+            throw err;
+          }
+          return connection;
+        })();
+      }
+      try {
+        await this.connecting;
+      } finally {
+        this.connecting = null;
       }
     }
-    this.jsm = await this.nc.jetstreamManager(this.options.jetStreamOptions);
     if (this.options.streamConfig) {
       await this.setupStream();
     }
@@ -46,8 +81,8 @@ export class NatsJetStreamServer
   }
 
   async close() {
-    await this.nc.drain();
-    this.nc = undefined;
+    await this.driver.close(this.connection);
+    this.connection = undefined;
   }
 
   private async bindEventHandlers() {
@@ -55,20 +90,26 @@ export class NatsJetStreamServer
       ([, handler]) => handler.isEventHandler,
     );
 
-    const js = this.nc.jetstream(this.options.jetStreamOptions);
-
     for (const [subject, eventHandler] of eventHandlers) {
-      const consumerOptions = serverConsumerOptionsBuilder(
-        this.options.consumerOptions,
+      // Only the modern driver needs the stream name; the legacy push
+      // subscribe infers the stream server-side.
+      const stream =
+        this.driver.kind === 'modern'
+          ? resolveStreamName(this.options)
+          : undefined;
+      const subscription = await this.driver.subscribeEvents(
+        this.connection,
         subject,
+        this.options.consumerOptions,
+        this.options.jetStreamOptions,
+        stream,
       );
-      const subscription = await js.subscribe(subject, consumerOptions);
       this.logger.log(`Subscribed to ${subject} events`);
       const done = (async () => {
-        for await (const msg of subscription) {
+        for await (const consumed of subscription.messages) {
           try {
-            const data = this.codec.decode(msg.data);
-            const context = new NatsJetStreamContext([msg]);
+            const data = jsonPayloadCodec.decode(consumed.data);
+            const context = new NatsJetStreamContext([consumed.raw]);
             const resultOrStream = await eventHandler(data, context);
             if (isObservable(resultOrStream)) {
               const connectableSource = connectable(resultOrStream, {
@@ -81,13 +122,16 @@ export class NatsJetStreamServer
             this.logger.error(err.message, err.stack);
             // specifies that you failed to process the server and instructs
             // the server to not send it again (to any consumer)
-            msg.term();
+            toJetStreamMessage(consumed.raw).term();
           }
         }
       })();
       done.then(() => {
         // if the connection is closed or draining, we don't need to unsubscribe as the subscription will be unsubscribed automatically
-        if (this.nc.isDraining() || this.nc.isClosed()) {
+        if (
+          this.driver.isDraining(this.connection) ||
+          this.driver.isClosed(this.connection)
+        ) {
           return;
         }
         subscription.destroy();
@@ -103,57 +147,43 @@ export class NatsJetStreamServer
     );
 
     for (const [subject, messageHandler] of messageHandlers) {
-      const subscriptionOptions: SubscriptionOptions = {
-        queue: this.options.consumerOptions.deliverTo,
-        callback: async (err, msg) => {
+      this.driver.subscribeMessages(
+        this.connection,
+        subject,
+        this.options.consumerOptions.deliverTo,
+        async (err, message) => {
           if (err) {
             return this.logger.error(err.message, err.stack);
           }
-          const payload = this.codec.decode(msg.data);
-          const context = new NatsContext([msg]);
+          const payload = jsonPayloadCodec.decode(message.data);
+          const context = new NatsContext([message.raw]);
           const response$ = this.transformToObservable(
             messageHandler(payload, context),
           );
           this.send(response$, (response) =>
-            msg.respond(this.codec.encode(response as JSON)),
+            context.message.respond(jsonPayloadCodec.encode(response)),
           );
         },
-      };
-
-      this.nc.subscribe(subject, subscriptionOptions);
+      );
       this.logger.log(`Subscribed to ${subject} messages`);
     }
   }
 
   private async setupStream() {
     const { streamConfig } = this.options;
-    const streams = await this.jsm.streams.list().next();
-
     const reqStreamConfigs = !Array.isArray(streamConfig)
       ? [streamConfig]
       : streamConfig;
 
-    for (const requiredStreamConfig of reqStreamConfigs) {
-      const stream = streams.find(
-        (stream) => stream.config.name === requiredStreamConfig.name,
+    const results = await this.driver.ensureStreams(
+      this.connection,
+      this.options.jetStreamOptions,
+      reqStreamConfigs,
+    );
+    for (const result of results) {
+      this.logger.log(
+        `Stream ${result.name} ${result.created ? 'created' : 'updated'}`,
       );
-
-      if (stream) {
-        const streamSubjects = new Set([
-          ...stream.config.subjects,
-          ...requiredStreamConfig.subjects,
-        ]);
-
-        const streamInfo = await this.jsm.streams.update(stream.config.name, {
-          ...stream.config,
-          ...requiredStreamConfig,
-          subjects: [...streamSubjects.keys()],
-        });
-        this.logger.log(`Stream ${streamInfo.config.name} updated`);
-      } else {
-        const streamInfo = await this.jsm.streams.add(requiredStreamConfig);
-        this.logger.log(`Stream ${streamInfo.config.name} created`);
-      }
     }
   }
 }

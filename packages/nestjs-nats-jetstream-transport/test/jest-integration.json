@@ -13,5 +13,8 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "testEnvironment": "node",
-  "testTimeout": 30000
+  "testTimeout": 30000,
+  "moduleNameMapper": {
+    "^@nats-io/nats-core/internal$": "<rootDir>/../../node_modules/@nats-io/nats-core/lib/internal_mod.js"
+  }
 }

@@ -7,7 +7,14 @@ export * from './interfaces/nats-jetstream-client-options.interface';
 export * from './interfaces/nats-jetstream-server-options.interface';
 export * from './interfaces/server-consumer-options.interface';
 export * from './interfaces/nats-stream-config.interface';
+export * from './interfaces/nats-jetstream-options.interface';
 export * from './utils/server-consumer-options-builder';
+export * from './utils/consumer-config';
+export type {
+  NatsDriverOption,
+  NatsDriverResolution,
+  DriverAvailabilityProbe,
+} from './driver/resolve-driver';
 export * from './nats-jetstream.context';
 
 export * from './utils/nats-jetstream-record.builder';

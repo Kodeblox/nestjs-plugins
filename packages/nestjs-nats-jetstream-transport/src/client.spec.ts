@@ -17,6 +17,15 @@ jest.mock('nats', () => {
   return { ...actual, connect: jest.fn() };
 });
 
+jest.mock('./driver/resolve-driver', () => {
+  const actual = jest.requireActual('./driver/resolve-driver');
+  return { ...actual, resolveNatsDriver: jest.fn(actual.resolveNatsDriver) };
+});
+
+import { resolveNatsDriver } from './driver/resolve-driver';
+
+const resolveMock = resolveNatsDriver as unknown as jest.Mock;
+
 const codec = JSONCodec();
 
 describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
@@ -42,6 +51,9 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     (connect as jest.Mock).mockReset().mockResolvedValue(fakeNc);
     client = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client', servers: 'nats://fake:4222' },
+      // These suites pin the legacy path (fake `nats` boundary); the modern
+      // path has its own driver-boundary coverage.
+      driver: 'legacy',
     } as any);
   });
 
@@ -49,9 +61,103 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     const hook = jest.fn();
     const c = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client', connectedHook: hook },
+      driver: 'legacy',
     } as any);
     await expect(c.connect()).resolves.toBe(fakeNc);
     expect(hook).toHaveBeenCalledWith(fakeNc);
+  });
+
+  it('awaits an async connectedHook before resolving connect()', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const hook = jest.fn(async () => {
+      await gate;
+    });
+    const c = new NatsJetStreamClientProxy({
+      connectionOptions: { name: 'unit-client', connectedHook: hook },
+      driver: 'legacy',
+    } as any);
+    let settled = false;
+    const pending = c.connect().then((nc) => {
+      settled = true;
+      return nc;
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(hook).toHaveBeenCalledTimes(1);
+    expect(settled).toBe(false);
+    release();
+    await expect(pending).resolves.toBe(fakeNc);
+    expect(settled).toBe(true);
+  });
+
+  it('propagates a rejecting connectedHook from connect()', async () => {
+    const c = new NatsJetStreamClientProxy({
+      connectionOptions: {
+        name: 'unit-client',
+        connectedHook: async () => {
+          throw new Error('hook boom');
+        },
+      },
+      driver: 'legacy',
+    } as any);
+    await expect(c.connect()).rejects.toThrow('hook boom');
+  });
+
+  it('drains and clears the connection when connectedHook throws', async () => {
+    const hook: jest.Mock = jest.fn(async () => {
+      throw new Error('hook boom');
+    });
+    const c = new NatsJetStreamClientProxy({
+      connectionOptions: { name: 'unit-client', connectedHook: hook },
+      driver: 'legacy',
+    } as any);
+    await expect(c.connect()).rejects.toThrow('hook boom');
+    // Drained, not orphaned: the dialed connection is released...
+    expect(drain).toHaveBeenCalledTimes(1);
+    // ...and the next connect() dials anew instead of reusing an orphan.
+    hook.mockImplementation(async () => undefined);
+    (connect as jest.Mock).mockClear();
+    await expect(c.connect()).resolves.toBe(fakeNc);
+    expect(connect as jest.Mock).toHaveBeenCalledTimes(1);
+    expect(hook).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares one connection for concurrent connect() calls', async () => {
+    const c = new NatsJetStreamClientProxy({
+      connectionOptions: { name: 'unit-client' },
+      driver: 'legacy',
+    } as any);
+    (connect as jest.Mock).mockClear();
+    const [a, b] = await Promise.all([c.connect(), c.connect()]);
+    expect(a).toBe(b);
+    expect(connect as jest.Mock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects connect() when driver resolution throws', async () => {
+    resolveMock.mockImplementationOnce(() => {
+      throw new Error('NATS driver mismatch (test)');
+    });
+    const c = new NatsJetStreamClientProxy({
+      connectionOptions: { name: 'unit-client' },
+      driver: 'modern',
+    } as any);
+    await expect(c.connect()).rejects.toThrow('NATS driver mismatch (test)');
+  });
+
+  it('logs the both-drivers notice once from connect()', async () => {
+    resolveMock.mockReturnValueOnce({
+      driver: 'legacy',
+      legacyAvailable: true,
+      modernAvailable: true,
+      notice: 'Both drivers installed (test)',
+    });
+    const logSpy = jest
+      .spyOn((client as any).logger, 'log')
+      .mockImplementation(() => undefined);
+    await client.connect();
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    expect(logSpy).toHaveBeenCalledWith('Both drivers installed (test)');
+    logSpy.mockRestore();
   });
 
   it('emit() publishes JSON bytes to the subject and resolves with the PubAck', async () => {

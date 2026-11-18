@@ -1,43 +1,78 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
-import {
-  Codec,
-  connect,
-  JSONCodec,
-  NatsConnection,
-  RequestOptions,
-} from 'nats';
 import { NATS_JETSTREAM_OPTIONS } from './constants';
 import { NatsJetStreamClientOptions } from './interfaces/nats-jetstream-client-options.interface';
+import type { NatsConnectionInfo } from './interfaces/nats-connection-options.interface';
+import {
+  jsonPayloadCodec,
+  resolveDriver,
+  type NatsDriver,
+} from './driver/nats-driver';
 import { NatsJetStreamRecord } from './utils/nats-jetstream-record.builder';
 import { NatsRequestRecord } from './utils/nats-request-record-builder';
 
 @Injectable()
 export class NatsJetStreamClientProxy extends ClientProxy {
-  private nc: NatsConnection;
-  private codec: Codec<JSON>;
+  private connection: unknown;
+  private connecting: Promise<unknown> | null = null;
+  private driver: NatsDriver;
+  private readonly logger = new Logger(NatsJetStreamClientProxy.name);
 
   constructor(
     @Inject(NATS_JETSTREAM_OPTIONS) private options: NatsJetStreamClientOptions,
   ) {
     super();
-    this.codec = JSONCodec();
   }
 
-  async connect(): Promise<NatsConnection> {
-    if (!this.nc) {
-      this.nc = await connect(this.options.connectionOptions);
-      if (this.options.connectionOptions.connectedHook) {
-        this.options.connectionOptions.connectedHook(this.nc);
+  async connect(): Promise<NatsConnectionInfo> {
+    const { driver, resolution } = resolveDriver(this.options.driver);
+    if (resolution.notice) {
+      this.logger.log(resolution.notice);
+    }
+    this.driver = driver;
+    if (!this.connection) {
+      // Share one in-flight connect so concurrent callers reuse a single
+      // connection (and run the hook once) instead of leaking a duplicate.
+      if (!this.connecting) {
+        this.connecting = (async () => {
+          const connection = await driver.connect(
+            this.options.connectionOptions,
+          );
+          this.connection = connection;
+          try {
+            if (this.options.connectionOptions.connectedHook) {
+              await this.options.connectionOptions.connectedHook(
+                connection as NatsConnectionInfo,
+              );
+            }
+          } catch (err) {
+            // Best-effort cleanup: the hook failed, so drain the dialed
+            // connection instead of orphaning it; the next connect() dials
+            // anew. Drain errors are swallowed — the hook failure propagates.
+            this.connection = undefined;
+            try {
+              await driver.close(connection);
+            } catch {
+              // ignore drain errors while propagating the hook failure
+            }
+            throw err;
+          }
+          return connection;
+        })();
+      }
+      try {
+        await this.connecting;
+      } finally {
+        this.connecting = null;
       }
     }
 
-    return this.nc;
+    return this.connection as NatsConnectionInfo;
   }
 
   async close() {
-    await this.nc.drain();
-    this.nc = undefined;
+    await this.driver.close(this.connection);
+    this.connection = undefined;
   }
 
   protected publish(
@@ -47,21 +82,21 @@ export class NatsJetStreamClientProxy extends ClientProxy {
     const subject = this.normalizePattern(packet.pattern);
 
     if (packet.data instanceof NatsRequestRecord) {
-      const options: RequestOptions = packet.data.options;
-      const payload = this.codec.encode(packet.data.payload);
-      this.nc
-        .request(subject, payload, options)
-        .then((msg) => this.codec.decode(msg.data) as WritePacket)
+      const options = packet.data.options;
+      const payload = jsonPayloadCodec.encode(packet.data.payload);
+      this.driver
+        .request(this.connection, subject, payload, options)
+        .then((data) => jsonPayloadCodec.decode(data) as WritePacket)
         .then((packet) => callback(packet))
         .catch((err) => {
           callback({ err });
         });
       return () => null;
     } else {
-      const payload = this.codec.encode(packet.data);
-      this.nc
-        .request(subject, payload)
-        .then((msg) => this.codec.decode(msg.data) as WritePacket)
+      const payload = jsonPayloadCodec.encode(packet.data);
+      this.driver
+        .request(this.connection, subject, payload)
+        .then((data) => jsonPayloadCodec.decode(data) as WritePacket)
         .then((packet) => callback(packet))
         .catch((err) => {
           callback({ err });
@@ -75,15 +110,25 @@ export class NatsJetStreamClientProxy extends ClientProxy {
   ): Promise<any> {
     const subject = this.normalizePattern(packet.pattern);
     const jetStreamOpts = this.options.jetStreamOption;
-    const js = this.nc.jetstream(jetStreamOpts);
 
     if (packet.data instanceof NatsJetStreamRecord) {
-      const payload = this.codec.encode(packet.data.payload);
+      const payload = jsonPayloadCodec.encode(packet.data.payload);
       const options = packet.data.options;
-      return js.publish(subject, payload, options);
+      return this.driver.publish(
+        this.connection,
+        subject,
+        payload,
+        jetStreamOpts,
+        options,
+      );
     } else {
-      const payload = this.codec.encode(packet.data);
-      return js.publish(subject, payload);
+      const payload = jsonPayloadCodec.encode(packet.data);
+      return this.driver.publish(
+        this.connection,
+        subject,
+        payload,
+        jetStreamOpts,
+      );
     }
   }
 }

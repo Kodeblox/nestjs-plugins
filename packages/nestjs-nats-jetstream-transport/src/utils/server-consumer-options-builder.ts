@@ -1,10 +1,27 @@
-import { consumerOpts, createInbox } from 'nats';
 import { ServerConsumerOptions } from '../interfaces/server-consumer-options.interface';
 
+/**
+ * Legacy-path builder (spec 001, section 4.2): the `nats` v2
+ * `consumerOpts()` chain, now loaded at call time instead of module load so
+ * importing the package never evaluates the driver. Called only from the
+ * legacy driver after `connect()`; direct standalone use works wherever the
+ * driver package is installed. This is the legacy-path call-time seam (see
+ * the scope note in `driver/nats-driver.ts`); it is used only by the legacy
+ * driver, while the modern driver builds the equivalent config from the
+ * neutral `toConsumerConfig` mapping.
+ *
+ * The return value is intentionally `unknown`: it is an opaque legacy
+ * driver object, meaningful only to the legacy consume path. New code
+ * should use the driver-neutral `toConsumerConfig` mapping instead.
+ */
 export function serverConsumerOptionsBuilder(
   serverConsumerOptions: ServerConsumerOptions,
   subject: string,
-) {
+): unknown {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { consumerOpts, createInbox } = require('nats') as typeof import(
+    'nats'
+  );
   const {
     deliverGroup,
     deliverToSubject,

@@ -34,7 +34,9 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test:unit": "jest",
-    "test:integration": "jest --config ./test/jest-integration.json --runInBand"
+    "test:integration": "jest --config ./test/jest-integration.json --runInBand",
+    "check:no-static-nats": "node scripts/check-no-static-nats.js dist",
+    "check:decoupled-dts": "npm run build && node scripts/check-decoupled-dts.js"
   },
   "author": "Bernt Anker [bernt.anker@gmail.com]",
   "license": "ISC",
@@ -44,6 +46,9 @@
     "rxjs": "^7.4.0"
   },
   "devDependencies": {
+    "@nats-io/jetstream": "^3.5.0",
+    "@nats-io/nats-core": "^3.5.0",
+    "@nats-io/transport-node": "^3.5.0",
     "@nestjs/common": "^8.2.0",
     "@nestjs/core": "^8.2.0",
     "@nestjs/microservices": "^8.2.0",
@@ -69,6 +74,9 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "testEnvironment": "node",
-    "testTimeout": 30000
+    "testTimeout": 30000,
+    "moduleNameMapper": {
+      "^@nats-io/nats-core/internal$": "<rootDir>/../../../node_modules/@nats-io/nats-core/lib/internal_mod.js"
+    }
   }
 }

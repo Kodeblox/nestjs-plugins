@@ -105,9 +105,15 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     coreSubscribe = jest.fn();
     const jsm = {
       streams: {
-        list: () => ({
-          next: async () => [...registry.values()],
-        }),
+        list: () => {
+          const items: any[] = [...registry.values()];
+          return {
+            next: async () => items,
+            [Symbol.asyncIterator]: async function* () {
+              yield* items;
+            },
+          };
+        },
         add: streamsAdd,
         update: streamsUpdate,
       },
@@ -123,10 +129,13 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     (connect as jest.Mock).mockReset().mockResolvedValue(fakeNc);
   });
 
+  // These suites pin the legacy path (fake `nats` boundary); the modern
+  // path has its own driver-boundary coverage. Extras may override driver.
   function makeServer(extra: any = {}) {
     return new NatsJetStreamServer({
       connectionOptions: { name: 'unit-server' },
       consumerOptions: { durable: 'd1', manualAck: true },
+      driver: 'legacy',
       ...extra,
     } as any);
   }

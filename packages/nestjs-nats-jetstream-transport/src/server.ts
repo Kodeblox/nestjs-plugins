@@ -12,6 +12,7 @@ import {
 import {
   jsonPayloadCodec,
   resolveDriver,
+  resolveStreamName,
   type NatsDriver,
 } from './driver/nats-driver';
 
@@ -90,11 +91,18 @@ export class NatsJetStreamServer
     );
 
     for (const [subject, eventHandler] of eventHandlers) {
+      // Only the modern driver needs the stream name; the legacy push
+      // subscribe infers the stream server-side.
+      const stream =
+        this.driver.kind === 'modern'
+          ? resolveStreamName(this.options)
+          : undefined;
       const subscription = await this.driver.subscribeEvents(
         this.connection,
         subject,
         this.options.consumerOptions,
         this.options.jetStreamOptions,
+        stream,
       );
       this.logger.log(`Subscribed to ${subject} events`);
       const done = (async () => {

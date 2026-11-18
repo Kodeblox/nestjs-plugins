@@ -1,8 +1,11 @@
 import type {
+  ConsumerOptsBuilder,
   JetStreamOptions,
   JetStreamPublishOptions,
   NatsConnection,
   RequestOptions,
+  StreamConfig,
+  StreamUpdateConfig,
 } from 'nats';
 import type { NatsConnectionOptions } from '../interfaces/nats-connection-options.interface';
 import type { NatsStreamConfig } from '../interfaces/nats-stream-config.interface';
@@ -13,6 +16,7 @@ import type {
   NatsDriver,
   StreamSetupResult,
 } from './nats-driver';
+import { withDriverHeaders } from './nats-driver';
 import { serverConsumerOptionsBuilder } from '../utils/server-consumer-options-builder';
 
 /**
@@ -21,7 +25,9 @@ import { serverConsumerOptionsBuilder } from '../utils/server-consumer-options-b
  * lazily via dynamic `import()` on first use and cached — this module has no
  * top-level driver require, so importing the package never evaluates the
  * driver at load time. The builder modules it uses obtain the same runtime
- * at call time; see their headers.
+ * at call time; see their headers. Publish/request header carriers are
+ * translated into legacy headers via the shared `withDriverHeaders` helper,
+ * so carriers built by either driver generation keep working here.
  */
 
 type NatsModule = typeof import('nats');
@@ -72,12 +78,16 @@ export function createLegacyDriver(): NatsDriver {
       jetStreamOptions?: unknown,
       publishOptions?: unknown,
     ) {
+      const { headers } = await loadNats();
       const nc = connection as NatsConnection;
       const js = nc.jetstream(jetStreamOptions as JetStreamOptions | undefined);
       const ack = await js.publish(
         subject,
         payload,
-        publishOptions as JetStreamPublishOptions | undefined,
+        withDriverHeaders(
+          publishOptions as JetStreamPublishOptions | undefined,
+          headers,
+        ),
       );
       return { stream: ack.stream, seq: ack.seq, duplicate: ack.duplicate };
     },
@@ -88,11 +98,12 @@ export function createLegacyDriver(): NatsDriver {
       payload: Uint8Array,
       options?: unknown,
     ): Promise<Uint8Array> {
+      const { headers } = await loadNats();
       const nc = connection as NatsConnection;
       const msg = await nc.request(
         subject,
         payload,
-        options as RequestOptions | undefined,
+        withDriverHeaders(options as RequestOptions | undefined, headers),
       );
       return msg.data;
     },
@@ -106,7 +117,13 @@ export function createLegacyDriver(): NatsDriver {
       const jsm = await nc.jetstreamManager(
         jetStreamOptions as JetStreamOptions | undefined,
       );
-      const streams = await jsm.streams.list().next();
+      // Paginate: list().next() returns only the first page, so a server
+      // with more streams than fit would miss an existing stream and fail
+      // on add().
+      const streams = [];
+      for await (const stream of jsm.streams.list()) {
+        streams.push(stream);
+      }
       const results: StreamSetupResult[] = [];
       for (const requiredStreamConfig of configs) {
         const stream = streams.find(
@@ -117,14 +134,17 @@ export function createLegacyDriver(): NatsDriver {
             ...stream.config.subjects,
             ...requiredStreamConfig.subjects,
           ]);
+          // Neutral config in, driver-typed config at the edge.
           const streamInfo = await jsm.streams.update(stream.config.name, {
             ...stream.config,
             ...requiredStreamConfig,
             subjects: [...streamSubjects.keys()],
-          });
+          } as Partial<StreamUpdateConfig>);
           results.push({ name: streamInfo.config.name, created: false });
         } else {
-          const streamInfo = await jsm.streams.add(requiredStreamConfig);
+          const streamInfo = await jsm.streams.add(
+            requiredStreamConfig as unknown as StreamConfig,
+          );
           results.push({ name: streamInfo.config.name, created: true });
         }
       }
@@ -142,7 +162,7 @@ export function createLegacyDriver(): NatsDriver {
       const consumerOpts = serverConsumerOptionsBuilder(
         consumerOptions,
         subject,
-      );
+      ) as unknown as ConsumerOptsBuilder;
       const subscription = await js.subscribe(subject, consumerOpts);
       return {
         messages: (async function* () {

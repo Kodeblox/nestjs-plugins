@@ -4,7 +4,7 @@
  * connected here.
  */
 import { JSONCodec } from 'nats';
-import { jsonPayloadCodec, resolveDriver } from './nats-driver';
+import { jsonPayloadCodec, resolveDriver, resolveStreamName } from './nats-driver';
 import { resolveNatsDriver } from './resolve-driver';
 
 jest.mock('./resolve-driver', () => {
@@ -19,20 +19,44 @@ const textDecoder = new TextDecoder();
 
 describe('resolveDriver (no server)', () => {
   it('returns the legacy driver for legacy resolution', () => {
+    resolveMock.mockReturnValueOnce({
+      driver: 'legacy',
+      legacyAvailable: true,
+      modernAvailable: false,
+    });
     const { driver, resolution } = resolveDriver(undefined);
     expect(driver.kind).toBe('legacy');
     expect(resolution.driver).toBe('legacy');
   });
 
-  it('throws the honest Phase-3 error when resolution names modern', () => {
+  it('returns the modern driver for modern resolution', () => {
     resolveMock.mockReturnValueOnce({
       driver: 'modern',
       legacyAvailable: false,
       modernAvailable: true,
     });
-    expect(() => resolveDriver(undefined)).toThrow(
-      /NATS driver 'modern' is not implemented yet.*Phase 3/,
-    );
+    const { driver, resolution } = resolveDriver(undefined);
+    expect(driver.kind).toBe('modern');
+    expect(resolution.driver).toBe('modern');
+  });
+
+  it('resolves the stream name explicitly, from a single streamConfig, or throws', () => {
+    expect(
+      resolveStreamName({ stream: 's', streamConfig: { name: 'other', subjects: [] } } as any),
+    ).toBe('s');
+    expect(
+      resolveStreamName({ streamConfig: { name: 'only', subjects: [] } } as any),
+    ).toBe('only');
+    expect(
+      resolveStreamName({ streamConfig: [{ name: 'only', subjects: [] }] } as any),
+    ).toBe('only');
+    expect(() =>
+      resolveStreamName({ streamConfig: [
+        { name: 'a', subjects: [] },
+        { name: 'b', subjects: [] },
+      ] } as any),
+    ).toThrow(/needs a stream name/);
+    expect(() => resolveStreamName({} as any)).toThrow(/needs a stream name/);
   });
 });
 

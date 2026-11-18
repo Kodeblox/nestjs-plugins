@@ -1,5 +1,11 @@
 # 🚀 Nats JetStream Transport Module for NestJS
 
+> **Maintenance line (v2.x).** This branch serves Nest ≤11 apps on the
+> legacy `nats@2` driver and receives critical fixes only — nothing is
+> published from it, and its driver (`nats@2.29.3`) is already deprecated
+> upstream. For Nest 12 / NATS v3, use v3.x from `main` and follow the
+> [migration guide](https://github.com/Kodeblox/nestjs-plugins/blob/main/packages/nestjs-nats-jetstream-transport/README.md#%EF%B8%8F-migrating-to-v3).
+
 Build Event Driven Microservices Architecture with Nats JetStream Server and NestJS.
 
 - At-least-once delivery; exactly once within a window

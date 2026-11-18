@@ -19,42 +19,94 @@ Build Event Driven Microservices Architecture with Nats JetStream Server and Nes
 npm i @kodeblox/nestjs-nats-jetstream-transport @nestjs/microservices
 ```
 
-The transport requires `@nestjs/microservices` alongside the `@nestjs/common` and `@nestjs/core` packages every NestJS app already has.
-`nats`, `rxjs` and `reflect-metadata` are installed automatically as dependencies of this package.
+Then install exactly **one** driver generation for your Nest major:
 
-## 🧭 Setup: Nest ≤11 vs Nest 12
+| Nest major | Driver | Install |
+| --- | --- | --- |
+| ≤11 (legacy) | `nats` v2 | `npm i nats@^2` |
+| 12 (modern) | NATS v3 | `npm i @nats-io/transport-node @nats-io/jetstream @nats-io/nats-core` |
 
-### Nest 11 and below (legacy driver)
+Since v3 the framework/driver packages are (optional) peers, not bundled
+dependencies: `@nestjs/common`, `@nestjs/core`, `@nestjs/microservices`
+(`^11 \|\| ^12`), `rxjs`, `reflect-metadata`, plus the driver you chose
+above. npm installs peers automatically; if your package manager does not,
+add them explicitly. Installing both driver generations side by side works
+(the adapter loads exactly one at startup), but a finished app should keep
+only its own generation.
 
-```bash
-npm i @kodeblox/nestjs-nats-jetstream-transport
-```
+## ⬆️ Migrating to v3
 
-`nats@2` arrives with the plugin. Nothing else changes: the driver
-auto-resolves to `legacy`, the `stream` option is ignored (the stream is
-inferred server-side), and all existing code keeps working. You may pin
-`driver: 'legacy'` explicitly, but the default already does that when only
-`nats` is installed.
+### Staying on Nest ≤11
 
-### Nest 12 (modern driver)
+1. Bump the plugin to `^3.0.0`.
+2. Add `nats@^2` to your own dependencies — it used to arrive
+   transitively with the plugin and no longer does.
 
-```bash
-npm i @kodeblox/nestjs-nats-jetstream-transport @nats-io/transport-node @nats-io/jetstream @nats-io/nats-core
-```
+Nothing else changes: the driver auto-resolves to `legacy`, the `stream`
+option is ignored (the stream is inferred server-side), and all existing
+code keeps working. You may pin `driver: 'legacy'` explicitly, but the
+default already does that when only `nats` is installed.
 
-Then make sure each handler's stream is known: set the `stream` server
-option, or configure exactly one stream via `streamConfig` (object or
-single-element array) so it is reused — otherwise `listen()` throws telling
-you which remedy to apply. `driver: 'modern'` pins the modern driver and
-fails fast with the install hint if the packages are missing; omitting it
-auto-resolves to modern whenever `@nats-io/transport-node` is present.
+### Moving to Nest 12
 
-Two caveats until the v3.0.0 release (Phase 4): `nats@2` is still a runtime
-dependency of the plugin, so it is installed transitively even in a Nest 12
-app — it is never loaded when the modern driver resolves, and you remove it
-for good by uninstalling it once v3 declares the drivers optional peers.
-And Nest 12 itself needs Node ≥20.19 or ≥22.12 (its ESM-only core is loaded
-via `require(esm)`).
+1. Run Nest's `nest upgrade` — it already swaps `nats` for
+   `@nats-io/transport-node` in *your* manifest.
+2. Uninstall the legacy driver and install the modern set:
+   `npm uninstall nats && npm i @nats-io/transport-node @nats-io/jetstream @nats-io/nats-core`.
+3. Bump the plugin to `^3.0.0`.
+4. Make sure each handler's stream is known: set the `stream` server
+   option, or configure exactly one stream via `streamConfig` (object or
+   single-element array) so it is reused — otherwise `listen()` throws
+   telling you which remedy to apply.
+
+Application-code changes are needed only where you touched driver
+surfaces that changed upstream:
+
+- `context.message` no longer exposes the raw `JsMsg`/`Msg`: read
+  `subject`, `data`, `headers`, `info` (with `deliveryCount` normalized
+  across drivers) and `ack()`/`nak()`/`term()`/`working()` off the neutral
+  surface, or reach for `rawMessage` to get the underlying driver message.
+- Custom NATS serializers/deserializers: Nest 12 delivers the full NATS
+  message object to deserializers — read payloads with `msg.json()`
+  (see Nest's NATS transport docs).
+- `Events`/`DebugEvents` status enums are gone upstream; `nc.status()`
+  yields typed status objects with a string `type` field instead.
+- `JSONCodec()`/`StringCodec()` are gone upstream; the plugin encodes with
+  `JSON.stringify` and decodes with `JSON.parse`/`msg.json()` internally,
+  byte-identical on the wire.
+- `connectedHook` is typed against a minimal connection surface but still
+  receives the raw driver connection.
+
+### Mixed fleets during a rolling upgrade
+
+Nest 11 and Nest 12 services can share one NATS server and one stream
+throughout the migration: the wire protocol and the server did not change,
+only the client libraries did. Streams created by one generation are
+visible to the other, so roll services one by one with no flag day.
+
+### Node floors per stack
+
+| Stack | Minimum Node | CI proves on |
+| --- | --- | --- |
+| Legacy: Nest 11 + `nats` v2 | ≥18 | Node 20 |
+| Modern: Nest 12 + NATS v3 | ≥20.19 or ≥22.12 (Nest 12's ESM-only core loads via `require(esm)`) | Node 24 (Jest 30 additionally needs ≥24.9, so the matrix uses 24; the plugin itself runs on ≥22.12) |
+
+There is no single global floor: the `engines` field states `>=18`, and
+the table above is the contract per stack. Nest ≤10 is not claimed by v3 —
+stay on the v2.x maintenance line (below) on those majors.
+
+### Breaking changes in v3
+
+- `@nestjs/*` and the NATS drivers are now (optional) peer dependencies —
+  install your generation explicitly (table above).
+- The public API no longer leaks driver types (`NatsJetStreamContext.message`,
+  `connectedHook` argument); see the driver-surface notes above.
+- `on()`/`unwrap()` are now implemented on client and server (they are
+  abstract on Nest 11/12 base classes), returning the underlying
+  driver-typed-as-`unknown` connection.
+- Node floor is per stack (table above), not global.
+- Everything else — class names, `register`/`registerAsync`, option field
+  names, builder methods — stays source-compatible.
 
 ## 🔀 Driver generations (Nest ≤11 / `nats` v2 and Nest 12 / NATS v3)
 
@@ -81,11 +133,16 @@ is the only driver installed. With both installed a startup notice is logged.
   typed against a minimal connection surface but still receives the raw
   driver connection. `serverConsumerOptionsBuilder` is kept for the legacy
   path; new code should use the pure `toConsumerConfig()` mapping.
-- **Packaging today:** `nats@^2` is still a runtime dependency and both
-  driver generations are installed as devDependencies so the test suite
-  exercises both adapters. Declaring both drivers as optional peers (and the
-  Nest 12 range) is the v3.0.0 release step, tracked with the remaining
-  release work — see `docs/tech-specs/001-dual-nestjs-nats-support.md`.
+- **Packaging in v3:** both driver generations are optional peer
+  dependencies (see the install table above) and both stay installed as
+  devDependencies so the test suite exercises both adapters. The dual CI
+  matrix (`.github/workflows/ci-dual-matrix.yaml`) proves both cells
+  against a real JetStream server.
+- **v2.x maintenance line:** Nest ≤10, or Nest 11 apps that cannot take
+  the v3 peers yet, stay on the `v2.x` branch (cut from the last
+  legacy-only commit; `nats@^2` still bundled there). It receives critical
+  fixes only, and its driver (`nats@2.29.3`) is already deprecated
+  upstream — migrate to v3 when you can. Nothing is published from it.
 
 ## 🐳 Running Nats Jetstream server in Docker
 

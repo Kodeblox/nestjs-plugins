@@ -1,4 +1,5 @@
 import type { NatsHeaders } from '../nats-jetstream.context';
+import { LEGACY_DRIVER_PACKAGE } from './resolve-driver';
 
 /**
  * Driver headers factory (spec 001, section 4.2.3). Builders run
@@ -26,7 +27,8 @@ function resolveHeadersFactory(): HeadersFactory {
       cachedFactory = require('@nats-io/nats-core').headers as HeadersFactory;
     } catch {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      cachedFactory = require('nats').headers as HeadersFactory;
+      cachedFactory = require(LEGACY_DRIVER_PACKAGE)
+        .headers as HeadersFactory;
     }
   }
   return cachedFactory;

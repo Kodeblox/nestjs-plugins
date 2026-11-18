@@ -360,7 +360,20 @@ describeIntegration('NATS JetStream transport, modern driver (real server)', () 
     const second = makeServer(`modern-brestart-b-${runId}`);
     try {
       await new Promise<void>((res) => second.listen(res));
-      await firstValueFrom(client.emit(resumeSubject, { id: 2 }));
+      // The client connection predates the restart and reconnects
+      // asynchronously; retry the setup publish until the reconnected
+      // connection accepts it instead of racing the reconnect window.
+      // Assertions below are unchanged.
+      const emitStart = Date.now();
+      for (;;) {
+        try {
+          await firstValueFrom(client.emit(resumeSubject, { id: 2 }));
+          break;
+        } catch (err) {
+          if (Date.now() - emitStart > 20000) throw err;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
       await waitFor(() => seen.some((s) => s.id === 2), 20000);
       // Beyond ackWait (1s): an acked id 1 would be redelivered here
       // if the durable did not survive the broker restart.

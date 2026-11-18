@@ -1,6 +1,7 @@
 import type {
   JetStreamManagerOptions,
   JetStreamPublishOptions,
+  StreamConfig,
 } from '@nats-io/jetstream';
 import type { NatsConnection, RequestOptions } from '@nats-io/nats-core';
 import type { NodeConnectionOptions } from '@nats-io/transport-node';
@@ -115,6 +116,10 @@ export function createModernDriver(): NatsDriver {
       return (connection as NatsConnection).isDraining();
     },
 
+    status(connection: unknown): AsyncIterable<unknown> {
+      return (connection as NatsConnection).status();
+    },
+
     async publish(
       connection: unknown,
       subject: string,
@@ -190,7 +195,12 @@ export function createModernDriver(): NatsDriver {
           });
           results.push({ name: streamInfo.config.name, created: false });
         } else {
-          const streamInfo = await jsm.streams.add(requiredStreamConfig);
+          // The neutral config keeps driver enums as plain strings (they
+          // are identical on the wire); convert at this boundary the same
+          // way jetStreamOptions is converted above.
+          const streamInfo = await jsm.streams.add(
+            requiredStreamConfig as unknown as StreamConfig,
+          );
           results.push({ name: streamInfo.config.name, created: true });
         }
       }

@@ -60,6 +60,9 @@ describeIntegration('NATS JetStream transport (real server)', () => {
         name: streamName,
         subjects: [`baseline.${runId}.order.*`],
       },
+      // Legacy cell: pin the driver explicitly now that both generations
+      // are installed (unpinned resolution would prefer modern).
+      driver: 'legacy',
     } as any);
     server.addHandler(
       createdSubject,
@@ -90,6 +93,7 @@ describeIntegration('NATS JetStream transport (real server)', () => {
 
     client = new NatsJetStreamClientProxy({
       connectionOptions: { name: `baseline-client-${runId}`, servers: NATS_URL },
+      driver: 'legacy',
     } as any);
     raw = await connect({ servers: NATS_URL, name: `baseline-raw-${runId}` });
   }, 30000);
@@ -119,6 +123,7 @@ describeIntegration('NATS JetStream transport (real server)', () => {
         name: streamName,
         subjects: [`baseline.${runId}.invoice.*`],
       },
+      driver: 'legacy',
     } as any);
     await new Promise<void>((res) => extra.listen(res));
     await extra.close();
@@ -240,6 +245,7 @@ describeIntegration('NATS JetStream transport (real server)', () => {
           name: streamName,
           subjects: [`baseline.${runId}.order.*`],
         },
+        driver: 'legacy',
       } as any);
       s.addHandler(
         resumeSubject,
@@ -292,6 +298,7 @@ describeIntegration('NATS JetStream transport (real server)', () => {
           name: streamName,
           subjects: [`baseline.${runId}.order.*`],
         },
+        driver: 'legacy',
       } as any);
       s.addHandler(
         queueSubject,

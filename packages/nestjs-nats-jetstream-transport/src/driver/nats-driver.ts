@@ -1,9 +1,11 @@
 import type { NatsDriverOption, NatsDriverResolution } from './resolve-driver';
 import { resolveNatsDriver } from './resolve-driver';
 import type { NatsConnectionOptions } from '../interfaces/nats-connection-options.interface';
+import type { NatsJetStreamServerOptions } from '../interfaces/nats-jetstream-server-options.interface';
 import type { NatsStreamConfig } from '../interfaces/nats-stream-config.interface';
 import type { ServerConsumerOptions } from '../interfaces/server-consumer-options.interface';
 import { createLegacyDriver } from './legacy-driver';
+import { createModernDriver } from './modern-driver';
 
 /**
  * Internal driver adapter (spec 001, section 4.2). Every NATS access in
@@ -11,16 +13,17 @@ import { createLegacyDriver } from './legacy-driver';
  * this plugin's types (plus `unknown` for driver handles and passthrough
  * option bags). No driver package is referenced here — not even as a type —
  * so this module loads cleanly on either driver generation. The legacy
- * implementation lives in `legacy-driver.ts`; the modern one lands with the
- * Phase 3 spike and shares this exact surface.
+ * implementation lives in `legacy-driver.ts` and the modern one in
+ * `modern-driver.ts`; both share this exact surface.
  *
  * Scope note: `client.ts` / `server.ts` go through this interface. The
- * builder modules (`server-consumer-options-builder`, the two record
- * builders) are a documented legacy-path call-time seam — they obtain the
- * driver runtime at call time (function scope) rather than through this
- * interface, because they run synchronously in user code. Phase 3 must port
- * the `headers()` / `consumerOpts()` / `createInbox()` shapes alongside the
- * driver, or inject them via this interface.
+ * `server-consumer-options-builder` module is a documented legacy-path
+ * call-time seam — it obtains the legacy runtime at call time (function
+ * scope) rather than through this interface, because it runs synchronously;
+ * it is used only by the legacy driver. The record builders resolve their
+ * `headers()` factory per driver package (`driver-headers.ts`) and stay
+ * interoperable because both drivers translate any `keys()`/`values()`
+ * carrier at publish/request time.
  */
 
 export interface JetStreamPublishResult {
@@ -79,6 +82,7 @@ export interface NatsDriver {
     subject: string,
     consumerOptions: ServerConsumerOptions,
     jetStreamOptions: unknown,
+    stream?: string,
   ): Promise<EventSubscription>;
   subscribeMessages(
     connection: unknown,
@@ -129,21 +133,81 @@ export const jsonPayloadCodec = {
 };
 
 /**
- * Resolve the configured driver and return its implementation. Only the
- * legacy driver exists in this round; a resolution naming the modern driver
- * fails loudly here until the Phase 3 spike lands (issue #7).
+ * Resolve the stream a JetStream handler consumes from. The modern driver
+ * must name the stream at consumer-creation time (the legacy push subscribe
+ * inferred it), so exactly one source must identify it: the explicit
+ * `stream` server option, else a single configured stream. Anything else
+ * fails loudly at `listen()` time.
+ */
+export function resolveStreamName(
+  options: NatsJetStreamServerOptions,
+): string {
+  if (options.stream) {
+    return options.stream;
+  }
+  const configs = options.streamConfig;
+  const list = configs === undefined ? [] : Array.isArray(configs) ? configs : [configs];
+  if (list.length === 1 && list[0]?.name) {
+    return list[0].name;
+  }
+  throw new Error(
+    'The modern NATS driver needs a stream name for each JetStream ' +
+      'consumer. Set the `stream` server option or configure exactly one ' +
+      'stream via `streamConfig`.',
+  );
+}
+
+/**
+ * Translate a header carrier entry-for-entry into the calling driver's own
+ * headers via its factory. Only data headers transfer: a carrier that
+ * reports status metadata (`hasError`) is rejected loudly instead of being
+ * silently stripped. Accepts any `keys()`/`values()` carrier, so builders
+ * (which resolve the factory per driver package) stay interoperable with
+ * either driver, including an explicit legacy pin with both installed.
+ */
+export function withDriverHeaders<
+  T extends { headers?: unknown },
+  H extends { append(key: string, value: string): void },
+>(
+  options: T | undefined,
+  makeHeaders: () => H,
+): (Omit<T, 'headers'> & { headers?: H }) | undefined {
+  if (!options || !options.headers) {
+    // No carrier to translate: pass through untouched.
+    return options as unknown as
+      | (Omit<T, 'headers'> & { headers?: H })
+      | undefined;
+  }
+  const carrier = options.headers as {
+    keys(): string[];
+    values(key: string): string[];
+    hasError?: unknown;
+  };
+  if (carrier.hasError === true) {
+    throw new Error(
+      'NatsHeaders with status metadata cannot be translated across drivers: ' +
+        'pass driver-native status headers via the raw-message escape hatch.',
+    );
+  }
+  const out = makeHeaders();
+  for (const key of carrier.keys()) {
+    for (const value of carrier.values(key)) {
+      out.append(key, value);
+    }
+  }
+  return { ...options, headers: out };
+}
+
+/**
+ * Resolve the configured driver and return its implementation.
  */
 export function resolveDriver(explicit?: NatsDriverOption): {
   driver: NatsDriver;
   resolution: NatsDriverResolution;
 } {
   const resolution = resolveNatsDriver(explicit);
-  if (resolution.driver !== 'legacy') {
-    throw new Error(
-      `NATS driver '${resolution.driver}' is not implemented yet ` +
-        `(Phase 3, issue #7). Install the legacy driver with ` +
-        `'npm install nats@^2' and set options.driver to 'legacy'.`,
-    );
+  if (resolution.driver === 'modern') {
+    return { driver: createModernDriver(), resolution };
   }
   return { driver: createLegacyDriver(), resolution };
 }

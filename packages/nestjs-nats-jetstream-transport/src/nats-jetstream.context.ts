@@ -14,15 +14,30 @@ export interface NatsMessageHeaders {
   get(key: string): string;
 }
 
+/**
+ * Driver-neutral mutable header carrier. Satisfied structurally by both
+ * drivers' header objects; builders create them, handlers read them.
+ */
+export interface NatsHeaders extends NatsMessageHeaders {
+  set(key: string, value: string): void;
+  append(key: string, value: string): void;
+  has(key: string): boolean;
+  keys(): string[];
+  values(key: string): string[];
+  delete(key: string): void;
+  /**
+   * Optional status metadata (protocol-level, e.g. created via a status
+   * `headers()` factory call). Drivers translate only data headers: a
+   * carrier that reports status metadata is rejected loudly instead of
+   * being silently stripped.
+   */
+  readonly hasError?: boolean;
+}
+
 export interface NatsJetStreamMessageInfo {
   readonly stream: string;
   readonly consumer: string;
-  /**
-   * Normalised delivery count. The v2 `DeliveryInfo` already carries
-   * `deliveryCount` (`parseInfo` sets `redeliveryCount` as its alias); the
-   * `redeliveryCount` branch covers only hypothetical shapes lacking
-   * `deliveryCount`, defaulting to 1 when neither is present.
-   */
+  /** 1-based delivery count, reported by both drivers; defaults to 1. */
   readonly deliveryCount: number;
   readonly streamSequence: number;
   readonly deliverySequence: number;
@@ -55,9 +70,6 @@ export interface NatsCoreMessage {
 function normalizeDeliveryCount(info: any): number {
   if (typeof info?.deliveryCount === 'number') {
     return info.deliveryCount;
-  }
-  if (typeof info?.redeliveryCount === 'number') {
-    return info.redeliveryCount;
   }
   return 1;
 }

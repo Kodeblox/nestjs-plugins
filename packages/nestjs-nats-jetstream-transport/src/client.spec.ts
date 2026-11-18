@@ -51,6 +51,9 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     (connect as jest.Mock).mockReset().mockResolvedValue(fakeNc);
     client = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client', servers: 'nats://fake:4222' },
+      // These suites pin the legacy path (fake `nats` boundary); the modern
+      // path has its own driver-boundary coverage.
+      driver: 'legacy',
     } as any);
   });
 
@@ -58,6 +61,7 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     const hook = jest.fn();
     const c = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client', connectedHook: hook },
+      driver: 'legacy',
     } as any);
     await expect(c.connect()).resolves.toBe(fakeNc);
     expect(hook).toHaveBeenCalledWith(fakeNc);
@@ -71,6 +75,7 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     });
     const c = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client', connectedHook: hook },
+      driver: 'legacy',
     } as any);
     let settled = false;
     const pending = c.connect().then((nc) => {
@@ -93,6 +98,7 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
           throw new Error('hook boom');
         },
       },
+      driver: 'legacy',
     } as any);
     await expect(c.connect()).rejects.toThrow('hook boom');
   });
@@ -103,6 +109,7 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     });
     const c = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client', connectedHook: hook },
+      driver: 'legacy',
     } as any);
     await expect(c.connect()).rejects.toThrow('hook boom');
     // Drained, not orphaned: the dialed connection is released...
@@ -118,6 +125,7 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
   it('shares one connection for concurrent connect() calls', async () => {
     const c = new NatsJetStreamClientProxy({
       connectionOptions: { name: 'unit-client' },
+      driver: 'legacy',
     } as any);
     (connect as jest.Mock).mockClear();
     const [a, b] = await Promise.all([c.connect(), c.connect()]);

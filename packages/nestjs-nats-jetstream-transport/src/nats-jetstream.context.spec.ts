@@ -69,11 +69,7 @@ describe('NatsJetStreamContext / NatsContext (structural surface)', () => {
     });
   });
 
-  it('falls back to redeliveryCount and then to 1 when info is legacy/absent', () => {
-    expect(
-      toJetStreamMessage({ info: { redeliveryCount: 3 } } as any).info
-        .deliveryCount,
-    ).toBe(3);
+  it('defaults deliveryCount to 1 when info is absent', () => {
     const bare = toJetStreamMessage({ subject: 's' } as any);
     expect(bare.info.deliveryCount).toBe(1);
     expect(bare.headers).toBeUndefined();

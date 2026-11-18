@@ -1,14 +1,11 @@
-import type { ConnectionOptions } from 'nats';
-
 /**
- * Minimal structural surface of a driver connection passed to
- * `connectedHook`. Satisfied by both the legacy `nats` `NatsConnection` and
- * the modern `@nats-io/transport-node` connection, so the hook type no
- * longer leaks a driver package into the public `.d.ts`.
- *
- * The value received IS the raw driver connection object — cast it to your
- * generation's connection type for full API access beyond this surface.
+ * Driver-neutral connection options (spec 001, section 4.2.3). This is the
+ * plugin's own surface: the published `.d.ts` never references a driver
+ * package. Named fields cover what the plugin and its demos use; anything
+ * else rides the index signature and is forwarded to `connect()` untouched,
+ * so exotic driver options keep working without a type change here.
  */
+
 export interface NatsConnectionInfo {
   getServer(): string;
   status(): AsyncIterable<unknown>;
@@ -21,9 +18,19 @@ export type NatsConnectedHook = (
   connection: NatsConnectionInfo,
 ) => void | Promise<void>;
 
-// Full decoupling of the options heritage (`ConnectionOptions` above) waits
-// on the adapter phase; `import type` keeps it runtime-clean and elided.
-export interface NatsConnectionOptions extends ConnectionOptions {
+export interface NatsConnectionOptions {
   name: string;
   connectedHook?: NatsConnectedHook;
+  servers?: string | string[];
+  timeout?: number;
+  reconnect?: boolean;
+  maxReconnectAttempts?: number;
+  reconnectTimeWait?: number;
+  user?: string;
+  password?: string;
+  token?: string;
+  verbose?: boolean;
+  pedantic?: boolean;
+  /** Pass-through for any other driver connection option. */
+  [option: string]: unknown;
 }

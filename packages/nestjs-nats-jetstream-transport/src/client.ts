@@ -1,4 +1,3 @@
-import type { NatsConnection } from 'nats';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import { NATS_JETSTREAM_OPTIONS } from './constants';
@@ -25,7 +24,7 @@ export class NatsJetStreamClientProxy extends ClientProxy {
     super();
   }
 
-  async connect(): Promise<NatsConnection> {
+  async connect(): Promise<NatsConnectionInfo> {
     const { driver, resolution } = resolveDriver(this.options.driver);
     if (resolution.notice) {
       this.logger.log(resolution.notice);
@@ -68,7 +67,7 @@ export class NatsJetStreamClientProxy extends ClientProxy {
       }
     }
 
-    return this.connection as NatsConnection;
+    return this.connection as NatsConnectionInfo;
   }
 
   async close() {

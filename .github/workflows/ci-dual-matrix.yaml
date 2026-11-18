@@ -1,0 +1,149 @@
+# Dual CI matrix — spec 001 section 6, the proof this package "supports both".
+#
+# Cells:
+#   legacy — NestJS 11 + `nats` v2 driver, Node 20
+#   modern — NestJS 12 + `@nats-io/*` v3 driver, Node 24
+#
+# Each cell starts a REAL JetStream server and exports NATS_URL, so the
+# integration suite actually runs on both driver generations (no skips: the
+# server container is created with `--name nats-main`, which is also what
+# the modern broker-restart test drives via `docker restart`).
+# Each cell additionally runs the static gates per spec 001 section 6:
+# `check:no-static-nats`, `check:decoupled-dts`, and `tsc` (via `build`),
+# over the full unit suite plus BOTH integration specs (each spec pins its
+# own `driver:`, so every cell exercises both generations under its Nest
+# major). The modern cell also runs `check:tarball:no-nats`, proving the
+# published artifact contains no `require('nats')`.
+#
+# Recorded calls (spec 001 section 7.5 and section 6 notes):
+# - Jest in BOTH cells, not Vitest. The specs rely on jest.mock/jest.fn
+#   throughout; a second runner doubles maintenance for no extra signal.
+#   Nest's own prescription for ESM-only v12 is "Jest 30" (Vitest only for
+#   ESM-first projects), so the repo's default toolchain is jest@^30 with
+#   ts-jest@^29 + typescript@^5 everywhere: both cells run the SAME runner
+#   and only the Nest major differs. This also keeps `npm ci` resolution
+#   unambiguous (one runner version; the per-cell Nest swap nests cleanly).
+# - Jest 30 loads Nest 12's ESM-only packages only on Node >= 24.9, so the
+#   modern cell pins Node 24 (setup-node resolves latest 24.x). The plugin
+#   itself needs only Node >= 22.12 at runtime there (Node's require(esm));
+#   see the README "Node floors" table. The brief's "Node >= 22.12" floor
+#   is therefore satisfied: 24 >= 22.12, and the extra minor versions are
+#   a test-runner requirement, not a plugin requirement.
+# - Jest's require(esm) additionally needs `--experimental-vm-modules`
+#   (verified: without it jest-runtime's `supportsSyncEvaluate` capability
+#   check fails even on Node 24.22 and ESM-only Nest 12 cannot load), so
+#   the modern cell exports that flag via NODE_OPTIONS.
+# - The server runs as a named step-run container instead of a YAML
+#   `services:` entry for two reasons: the `nats` image only enables
+#   JetStream via its `-js` command flag (services cannot pass a command),
+#   and the broker-restart test needs `docker restart` control of the
+#   server, which an anonymous service container cannot provide.
+# - The default `npm ci` tree is the legacy stack (Nest 11 devDeps); only
+#   the modern cell re-pins (range rewrite + `npm install` in the job's
+#   working copy; the committed manifest and lockfile are untouched).
+# - Peer floor claimed is `^11 || ^12` because that is what these two cells
+#   prove. Nest 10 and below stay on the v2.x maintenance branch (see the
+#   README migration guide); widen the floor only with a new passing cell.
+
+name: Dual CI matrix (spec 001 section 6)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  cell:
+    name: ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: legacy (Nest 11 + nats v2, Node 20)
+            node: '20'
+            nest: '11'
+            nodeOptions: ''
+            repin: ''
+            tarballCheck: ''
+          - label: modern (Nest 12 + NATS v3, Node 24)
+            node: '24'
+            nest: '12'
+            nodeOptions: '--experimental-vm-modules'
+            repin: '@nestjs/common@^12 @nestjs/core@^12 @nestjs/microservices@^12'
+            tarballCheck: 'yes'
+
+    env:
+      NODE_OPTIONS: ${{ matrix.nodeOptions }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # A bare `npm install --no-save <pkg>` cannot change what a workspace
+      # resolves (the committed ^11 range keeps winning), so the modern cell
+      # re-pins the ranges and reinstalls. package.json/package-lock.json
+      # change only in this job's working copy; nothing here is committed.
+      - name: Re-pin Nest ${{ matrix.nest }} cell dependencies
+        if: matrix.repin != ''
+        run: |
+          npm pkg set -w @kodeblox/nestjs-nats-jetstream-transport devDependencies.@nestjs/common="^12.0.0" devDependencies.@nestjs/core="^12.0.0" devDependencies.@nestjs/microservices="^12.0.0"
+          npm install
+
+      - name: Record resolved cell versions
+        run: |
+          node --version
+          npm --version
+          npm ls @nestjs/microservices nats @nats-io/transport-node @nats-io/jetstream jest ts-jest typescript --workspace=@kodeblox/nestjs-nats-jetstream-transport
+
+      - name: Start JetStream server (named, with docker control)
+        run: |
+          docker run -d --name nats-main -p 4222:4222 nats:2-alpine -js -m 8222
+          for i in $(seq 1 60); do
+            (echo > /dev/tcp/127.0.0.1/4222) >/dev/null 2>&1 && break
+            sleep 1
+          done
+          (echo > /dev/tcp/127.0.0.1/4222) >/dev/null 2>&1
+
+      - name: Build (tsc)
+        working-directory: packages/nestjs-nats-jetstream-transport
+        run: npm run build
+
+      - name: Unit tests
+        working-directory: packages/nestjs-nats-jetstream-transport
+        run: npm run test:unit
+
+      - name: Integration tests (real server, both driver generations)
+        working-directory: packages/nestjs-nats-jetstream-transport
+        env:
+          NATS_URL: nats://127.0.0.1:4222
+          NATS_CONTAINER: nats-main
+        run: npm run test:integration
+
+      - name: Static gate — no load-time require('nats')
+        working-directory: packages/nestjs-nats-jetstream-transport
+        run: npm run check:no-static-nats
+
+      - name: Static gate — public .d.ts decoupled from drivers
+        working-directory: packages/nestjs-nats-jetstream-transport
+        run: npm run check:decoupled-dts
+
+      - name: Published-tarball gate — no require('nats') (modern cell)
+        if: matrix.tarballCheck == 'yes'
+        working-directory: packages/nestjs-nats-jetstream-transport
+        run: npm run check:tarball:no-nats
+
+      - name: Stop JetStream server
+        if: always()
+        run: docker rm -f nats-main >/dev/null 2>&1 || true

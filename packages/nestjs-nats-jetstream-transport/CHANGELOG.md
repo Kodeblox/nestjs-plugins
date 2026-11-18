@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.0.0](https://github.com/Kodeblox/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@2.2.8...@kodeblox/nestjs-nats-jetstream-transport@3.0.0) (2026-11-18)
+
+### ⚠ BREAKING CHANGES
+
+* NATS drivers and NestJS packages are now (optional) peer dependencies. Install your generation explicitly: `nats@^2` for Nest ≤11, `@nats-io/transport-node` + `@nats-io/jetstream` + `@nats-io/nats-core` for Nest 12.
+* The public API no longer leaks driver types (`NatsJetStreamContext.message`, `connectedHook` argument). See the README migration guide for the driver-surface notes (`msg.json()`, removed `Events`/`DebugEvents` enums, `StringCodec`/`JSONCodec` removal).
+* `on()`/`unwrap()` are now implemented on the client and server (abstract on the Nest 11/12 base classes), returning the underlying driver-typed-as-`unknown` connection.
+* The Node floor is per stack (legacy ≥18, modern ≥20.19 or ≥22.12), not global. Nest ≤10 is not claimed by v3 — stay on the `v2.x` maintenance line.
+
+### Features
+
+* Dual NestJS 11/12 + NATS v2/v3 support from a single codebase via the internal driver adapter (lazy `legacy`/`modern` resolution, pure `toConsumerConfig()` mapping, driver-neutral public types).
+* Dual CI matrix (`.github/workflows/ci-dual-matrix.yaml`): legacy cell (Nest 11 + `nats` v2, Node 20) and modern cell (Nest 12 + `@nats-io/*` v3, Node 24) each run the full unit suite, both integration specs against a real JetStream server (no skips), the static gates (`check:no-static-nats`, `check:decoupled-dts`, `tsc`), and — modern cell — the published-tarball `require('nats')` check.
+
+Lerna manages versions independently in this repo (`lerna.json`: `"version": "independent"`), so this bump is the direct `package.json` edit; no central version file exists.
+
 ## [2.2.8](https://github.com/Kodeblox/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@2.2.7...@kodeblox/nestjs-nats-jetstream-transport@2.2.8) (2026-09-20)
 
 **Note:** Version bump only for package @kodeblox/nestjs-nats-jetstream-transport

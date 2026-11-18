@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import { NATS_JETSTREAM_OPTIONS } from './constants';
@@ -16,6 +17,7 @@ export class NatsJetStreamClientProxy extends ClientProxy {
   private connection: unknown;
   private connecting: Promise<unknown> | null = null;
   private driver: NatsDriver;
+  private readonly statusEventEmitter = new EventEmitter();
   private readonly logger = new Logger(NatsJetStreamClientProxy.name);
 
   constructor(
@@ -73,6 +75,31 @@ export class NatsJetStreamClientProxy extends ClientProxy {
   async close() {
     await this.driver.close(this.connection);
     this.connection = undefined;
+  }
+
+  /**
+   * Status-event subscription, mirroring Nest's built-in NATS client: the
+   * listener attaches to this transport's own status emitter.
+   */
+  public on(event: string, callback: Function) {
+    this.statusEventEmitter.on(
+      event,
+      callback as (...args: any[]) => void,
+    );
+  }
+
+  /**
+   * Returns the underlying driver connection (spec 001 section 4.2.5),
+   * typed by the caller exactly like the built-in transport
+   * (`client.unwrap<NatsConnection>()`). Throws before `connect()`.
+   */
+  public unwrap<T>(): T {
+    if (!this.connection) {
+      throw new Error(
+        'Not initialized. Please call the "connect" method first.',
+      );
+    }
+    return this.connection as T;
   }
 
   protected publish(

@@ -343,4 +343,16 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     expect(logSpy).toHaveBeenCalledWith('Both drivers installed (test)');
     logSpy.mockRestore();
   });
+
+  it('unwrap() throws before listen and returns the live connection after', async () => {
+    const server = makeServer();
+    expect(() => server.unwrap()).toThrow('listen');
+    await new Promise<void>((res) => server.listen(res));
+    expect(server.unwrap()).toBe(fakeNc);
+  });
+
+  it('on() accepts a status listener without throwing', () => {
+    const server = makeServer();
+    expect(() => server.on('status', () => undefined)).not.toThrow();
+  });
 });

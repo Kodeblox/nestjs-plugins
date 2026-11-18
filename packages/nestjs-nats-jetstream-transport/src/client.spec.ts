@@ -230,4 +230,14 @@ describe('NatsJetStreamClientProxy (fake driver boundary)', () => {
     await client.close();
     expect(drain).toHaveBeenCalledTimes(1);
   });
+
+  it('unwrap() throws before connect and returns the live connection after', async () => {
+    expect(() => client.unwrap()).toThrow('connect');
+    await client.connect();
+    expect(client.unwrap()).toBe(fakeNc);
+  });
+
+  it('on() accepts a status listener without throwing', () => {
+    expect(() => client.on('status', () => undefined)).not.toThrow();
+  });
 });

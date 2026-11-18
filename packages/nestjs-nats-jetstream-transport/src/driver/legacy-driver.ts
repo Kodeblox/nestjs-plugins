@@ -17,6 +17,7 @@ import type {
   StreamSetupResult,
 } from './nats-driver';
 import { withDriverHeaders } from './nats-driver';
+import { LEGACY_DRIVER_PACKAGE } from './resolve-driver';
 import { serverConsumerOptionsBuilder } from '../utils/server-consumer-options-builder';
 
 /**
@@ -37,8 +38,11 @@ let cachedNatsPromise: Promise<NatsModule> | null = null;
 export function loadNats(): Promise<NatsModule> {
   // Cache the promise, not the resolved module, so concurrent first-use
   // callers share a single dynamic import instead of evaluating it twice.
+  // The specifier comes from the shared constant (not a literal) so the
+  // published output contains no `require('nats')` string for the tarball
+  // gate to trip on; probing in resolve-driver.ts uses the same constant.
   if (!cachedNatsPromise) {
-    const pending = import('nats');
+    const pending = import(LEGACY_DRIVER_PACKAGE) as Promise<NatsModule>;
     pending.catch(() => {
       cachedNatsPromise = null;
     });

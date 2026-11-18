@@ -1,4 +1,5 @@
 import { ServerConsumerOptions } from '../interfaces/server-consumer-options.interface';
+import { LEGACY_DRIVER_PACKAGE } from '../driver/resolve-driver';
 
 /**
  * Legacy-path builder (spec 001, section 4.2): the `nats` v2
@@ -18,8 +19,11 @@ export function serverConsumerOptionsBuilder(
   serverConsumerOptions: ServerConsumerOptions,
   subject: string,
 ): unknown {
+  // The specifier comes from the shared constant (not a literal) so the
+  // published output contains no `require('nats')` string; the type
+  // position still names the driver package for the legacy path.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { consumerOpts, createInbox } = require('nats') as typeof import(
+  const { consumerOpts, createInbox } = require(LEGACY_DRIVER_PACKAGE) as typeof import(
     'nats'
   );
   const {

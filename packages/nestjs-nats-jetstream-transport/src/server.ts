@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import { CustomTransportStrategy, Server } from '@nestjs/microservices';
 
 import { connectable, isObservable, Subject } from 'rxjs';
@@ -27,6 +28,7 @@ export class NatsJetStreamServer
   private connection: unknown;
   private connecting: Promise<unknown> | null = null;
   private driver: NatsDriver;
+  private readonly statusEventEmitter = new EventEmitter();
 
   constructor(private options: NatsJetStreamServerOptions) {
     super();
@@ -242,6 +244,32 @@ export class NatsJetStreamServer
     }
     await this.driver.close(this.connection);
     this.connection = undefined;
+  }
+
+  /**
+   * Status-event subscription, mirroring Nest's built-in NATS server: the
+   * listener attaches to this transport's own status emitter. Message
+   * handlers keep going through `addHandler` (used by `listen()`).
+   */
+  public on(event: string, callback: Function) {
+    this.statusEventEmitter.on(
+      event,
+      callback as (...args: any[]) => void,
+    );
+  }
+
+  /**
+   * Returns the underlying driver connection (spec 001 section 4.2.5),
+   * typed by the caller exactly like the built-in transport. Throws
+   * before `listen()`.
+   */
+  public unwrap<T>(): T {
+    if (!this.connection) {
+      throw new Error(
+        'Not initialized. Please call the "listen"/"startAllMicroservices" method before accessing the server.',
+      );
+    }
+    return this.connection as T;
   }
 
   private async bindEventHandlers() {

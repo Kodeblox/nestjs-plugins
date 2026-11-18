@@ -274,6 +274,34 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     await expect(server.listen(() => undefined)).rejects.toThrow('hook boom');
   });
 
+  it('drains and clears the connection when connectedHook throws', async () => {
+    const hook: jest.Mock = jest.fn(async () => {
+      throw new Error('hook boom');
+    });
+    const server = makeServer({
+      connectionOptions: { name: 'unit-server', connectedHook: hook },
+    });
+    await expect(server.listen(() => undefined)).rejects.toThrow('hook boom');
+    // Drained, not orphaned: the dialed connection is released...
+    expect(fakeNc.drain).toHaveBeenCalledTimes(1);
+    // ...and the next listen() dials anew instead of reusing an orphan.
+    hook.mockImplementation(async () => undefined);
+    (connect as jest.Mock).mockClear();
+    await new Promise<void>((res) => server.listen(res));
+    expect(connect as jest.Mock).toHaveBeenCalledTimes(1);
+    expect(hook).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares one connection for concurrent listen() calls', async () => {
+    const server = makeServer();
+    (connect as jest.Mock).mockClear();
+    await Promise.all([
+      new Promise<void>((res) => server.listen(res)),
+      new Promise<void>((res) => server.listen(res)),
+    ]);
+    expect(connect as jest.Mock).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects listen() when driver resolution throws', async () => {
     resolveMock.mockImplementationOnce(() => {
       throw new Error('NATS driver mismatch (test)');

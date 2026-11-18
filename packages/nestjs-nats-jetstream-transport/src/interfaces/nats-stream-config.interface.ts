@@ -1,4 +1,4 @@
-import { StreamConfig } from 'nats';
+import type { StreamConfig } from 'nats';
 
 type $StreamConfig = Pick<
   StreamConfig,

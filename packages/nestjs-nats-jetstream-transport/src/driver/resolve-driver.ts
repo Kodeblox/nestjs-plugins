@@ -5,14 +5,12 @@
  * is probed at startup (when `connect()` / `listen()` runs). The probe is
  * injectable, which keeps this unit-testable without a server.
  *
- * Interim limitation (handback finding 1): `client.ts` / `server.ts` still
- * statically import the legacy driver package, so on a legacy install the
- * process already evaluates that static require at load time. Until the
- * adapter phase removes those static imports (dynamic `import()` /
- * `loadPackage` per spec 001, section 4.2 rule 1), the 'neither installed'
- * and mismatch errors below are advisory-only there — they become
- * load-bearing once the adapter lands and the modern cell enforces
- * `scripts/check-no-static-nats` against dist.
+ * Phase 2 (adapter) state: no module imported from the package entry point
+ * evaluates a driver require at load time — the legacy driver loads via
+ * dynamic `import()` and the builders at call time only (spec 001,
+ * section 4.2 rule 1). The 'neither installed' and mismatch errors below
+ * are therefore effective at startup: a modern-only install fails here with
+ * an actionable message instead of crashing on a static require.
  */
 
 export type NatsDriverOption = 'legacy' | 'modern';

@@ -12,6 +12,7 @@ import { connectable, isObservable, Subject } from 'rxjs';
 import { NATS_JETSTREAM_TRANSPORT } from './constants';
 import { NatsJetStreamServerOptions } from './interfaces/nats-jetstream-server-options.interface';
 import { NatsContext, NatsJetStreamContext } from './nats-jetstream.context';
+import { resolveNatsDriver } from './driver/resolve-driver';
 import { serverConsumerOptionsBuilder } from './utils/server-consumer-options-builder';
 
 export class NatsJetStreamServer
@@ -29,10 +30,14 @@ export class NatsJetStreamServer
   }
 
   async listen(callback: () => void) {
+    const resolution = resolveNatsDriver(this.options.driver);
+    if (resolution.notice) {
+      this.logger.log(resolution.notice);
+    }
     if (!this.nc) {
       this.nc = await connect(this.options.connectionOptions);
       if (this.options.connectionOptions.connectedHook) {
-        this.options.connectionOptions.connectedHook(this.nc);
+        await this.options.connectionOptions.connectedHook(this.nc);
       }
     }
     this.jsm = await this.nc.jetstreamManager(this.options.jetStreamOptions);

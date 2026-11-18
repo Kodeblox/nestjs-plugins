@@ -187,13 +187,13 @@ export class NatsJetStreamServer
         } finally {
           this.connecting = null;
         }
+        if (freshConnect) {
+          // Detached: ends when the connection's status stream completes.
+          void this.forwardStatusUpdates();
+        }
       }
       if (this.options.streamConfig) {
         await this.setupStream();
-      }
-      if (freshConnect) {
-        // Detached: ends when the connection's status stream completes.
-        void this.forwardStatusUpdates();
       }
 
       await this.bindEventHandlers();

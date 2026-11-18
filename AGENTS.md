@@ -18,3 +18,19 @@ implementations, not for test-only changes, not for docs.
 - Never touch the upstream Redningsselskapet/nestjs-plugins repo — no
   pushes, PRs, issues, or milestones there. All tracking and code lives on
   this fork (`origin`).
+
+## Lane watch discipline — panes are truth, watches are hints
+
+A `herd watch` misses when the lane finishes in the gap (between send and
+watch-attach, or an earlier watch already consumed the token) and then waits
+on a token that will never come — while the finished report sits visible in
+the pane. Never trust a single long watch; corroborate every timeout.
+
+- After `herd send`, read the pane tail first (`herdr pane read`): report +
+  token already there means consume them directly, no watch needed.
+- Watch only genuinely pending work, with short timeouts (300–600s). On
+  timeout, read the pane before anything else: report present means done,
+  movement means re-arm, idle with no movement means refocus or resend —
+  never blind re-arm.
+- `herd status` is a second opinion, never the verdict: lanes have shown
+  `working`/`idle` with complete reports waiting in their panes.

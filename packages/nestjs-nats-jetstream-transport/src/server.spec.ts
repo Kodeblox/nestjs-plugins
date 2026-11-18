@@ -271,7 +271,7 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     expect(called).toBe(true);
   });
 
-  it('propagates a rejecting connectedHook from listen()', async () => {
+  it('routes a rejecting connectedHook to callback(err) (spec 002 Part A)', async () => {
     const server = makeServer({
       connectionOptions: {
         name: 'unit-server',
@@ -280,7 +280,10 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
         },
       },
     });
-    await expect(server.listen(() => undefined)).rejects.toThrow('hook boom');
+    const err = await new Promise<unknown>((res) =>
+      server.listen((e) => res(e)),
+    );
+    expect((err as Error).message).toBe('hook boom');
   });
 
   it('drains and clears the connection when connectedHook throws', async () => {
@@ -290,7 +293,10 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     const server = makeServer({
       connectionOptions: { name: 'unit-server', connectedHook: hook },
     });
-    await expect(server.listen(() => undefined)).rejects.toThrow('hook boom');
+    const err = await new Promise<unknown>((res) =>
+      server.listen((e) => res(e)),
+    );
+    expect((err as Error).message).toBe('hook boom');
     // Drained, not orphaned: the dialed connection is released...
     expect(fakeNc.drain).toHaveBeenCalledTimes(1);
     // ...and the next listen() dials anew instead of reusing an orphan.
@@ -311,14 +317,15 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     expect(connect as jest.Mock).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects listen() when driver resolution throws', async () => {
+  it('routes driver resolution errors to callback(err) (spec 002 Part A)', async () => {
     resolveMock.mockImplementationOnce(() => {
       throw new Error('NATS driver mismatch (test)');
     });
     const server = makeServer({ driver: 'modern' });
-    await expect(server.listen(() => undefined)).rejects.toThrow(
-      'NATS driver mismatch (test)',
+    const err = await new Promise<unknown>((res) =>
+      server.listen((e) => res(e)),
     );
+    expect((err as Error).message).toBe('NATS driver mismatch (test)');
   });
 
   it('logs the both-drivers notice once from listen()', async () => {

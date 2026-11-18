@@ -31,6 +31,12 @@ export interface NatsConnectionOptions {
   token?: string;
   verbose?: boolean;
   pedantic?: boolean;
+  /**
+   * Backoff between steady-state reconnects. Also supplies the default
+   * gap for the startup retry policy (spec 002): it is called once per
+   * startup gap when `startupPolicy.delayMs` is unset.
+   */
+  reconnectDelayHandler?: () => number;
   /** Pass-through for any other driver connection option. */
   [option: string]: unknown;
 }

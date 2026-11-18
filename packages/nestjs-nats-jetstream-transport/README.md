@@ -22,6 +22,37 @@ npm i @kodeblox/nestjs-nats-jetstream-transport @nestjs/microservices
 The transport requires `@nestjs/microservices` alongside the `@nestjs/common` and `@nestjs/core` packages every NestJS app already has.
 `nats`, `rxjs` and `reflect-metadata` are installed automatically as dependencies of this package.
 
+## 🔀 Driver generations (Nest ≤11 / `nats` v2 and Nest 12 / NATS v3)
+
+All NATS access goes through an internal driver adapter behind the
+`NatsDriver` interface (`src/driver/`, not part of the public API). The
+driver is resolved lazily at `connect()`/`listen()` time: an explicit
+`driver: 'legacy' | 'modern'` option on the client/server options is honored
+(an actionable error names the package to install on mismatch), otherwise
+`@nats-io/transport-node` wins when present and `nats` (v2) is used when it
+is the only driver installed. With both installed a startup notice is logged.
+
+- **Consuming stays push on both drivers** (`consumers.get` +
+  `consume()` on v3 mirrors legacy `js.subscribe`), with parity on durable
+  resume, `term()` on poison messages, and queue-group delivery.
+- **Stream naming (modern driver only):** a v3 consumer cannot be created
+  without the stream name. Set the `stream` server option, or configure
+  exactly one stream via `streamConfig` (object or single-element array) and
+  it is reused; otherwise `listen()` throws naming both remedies. The legacy
+  driver ignores `stream` (the stream is inferred server-side).
+- **Neutral public types:** `NatsJetStreamContext.message` exposes
+  `subject`, `data`, `headers`, `ack()`/`nak()`/`term()`/`working()`,
+  `info` (with `deliveryCount` normalized across drivers) and `rawMessage`
+  as the escape hatch to the underlying driver message. `connectedHook` is
+  typed against a minimal connection surface but still receives the raw
+  driver connection. `serverConsumerOptionsBuilder` is kept for the legacy
+  path; new code should use the pure `toConsumerConfig()` mapping.
+- **Packaging today:** `nats@^2` is still a runtime dependency and both
+  driver generations are installed as devDependencies so the test suite
+  exercises both adapters. Declaring both drivers as optional peers (and the
+  Nest 12 range) is the v3.0.0 release step, tracked with the remaining
+  release work — see `docs/tech-specs/001-dual-nestjs-nats-support.md`.
+
 ## 🐳 Running Nats Jetstream server in Docker
 
 ```bash
@@ -54,6 +85,14 @@ NATS_URL=nats://localhost:4222 npm run test:integration
 In CI, each matrix cell (see `docs/tech-specs/001-dual-nestjs-nats-support.md`
 section 6) must set `NATS_URL` so the integration suite actually runs on that
 cell's Nest/NATS driver generation.
+
+Two static gates pin the driver-neutral packaging without a server:
+
+```bash
+npm run check:no-static-nats   # no load-time require('nats') in dist (both drivers)
+npm run check:decoupled-dts    # strict skipLibCheck:false fixture proves the
+                               # public .d.ts needs no driver packages
+```
 
 ## ⚙️ Manage nats server from command line
 

@@ -28,6 +28,33 @@ The transport requires `@nestjs/microservices` alongside the `@nestjs/common` an
 docker run -d --name nats-main -p 4222:4222 -p 6222:6222 -p 8222:8222 nats -js -m 8222
 ```
 
+## 🧪 Tests
+
+Unit/contract tests (no server needed) pin the public API through observable
+outcomes: the real `consumerOpts()` configuration a consumer would be created
+with, record-builder publish/request options, context message surface, and
+client/server behaviour against a faithful fake at the `nats` driver boundary.
+
+```bash
+npm test            # unit tests + integration suite (integration skips without a server)
+npm run test:unit   # unit/contract tests only
+```
+
+Integration tests (`test/integration/`) run a real emit/send round trip,
+headers, duplicate-`msgID` deduplication, stream auto-create/update and the
+handler-error/`term()` path against a real JetStream server. They are
+**skipped with an explicit reason when no server is configured** (a skip is
+not a pass):
+
+```bash
+docker run -d --name nats-main -p 4222:4222 -p 8222:8222 nats -js -m 8222
+NATS_URL=nats://localhost:4222 npm run test:integration
+```
+
+In CI, each matrix cell (see `docs/tech-specs/001-dual-nestjs-nats-support.md`
+section 6) must set `NATS_URL` so the integration suite actually runs on that
+cell's Nest/NATS driver generation.
+
 ## ⚙️ Manage nats server from command line
 
 Install cli tool on MacOS

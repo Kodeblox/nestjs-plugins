@@ -1,17 +1,16 @@
 /**
- * Lazy-load guard (handback finding 1, spec 001 section 4.2 rule 1).
+ * Lazy-load guard (spec 001 section 4.2 rule 1).
  *
- * Phase 1 guarantee: the new driver-neutral modules must never statically
- * import a driver package, so a future modern-only install can load them
- * without evaluating `require('nats')`.
+ * Phase 2 guarantee: no module reachable from the package entry point
+ * statically imports a driver package, so a modern-only install can import
+ * this package without evaluating a driver require at load time. The legacy
+ * driver loads via dynamic `import()` and the builder modules at call time
+ * only. `import type` references are allowed — they are erased at compile
+ * time and carry no runtime require.
  *
- * Pinned interim state: `client.ts` / `server.ts` still statically import
- * `nats`, so true lazy loading is NOT yet achieved — any app importing this
- * package evaluates `require('nats')` at load time, and the resolve-driver
- * errors are advisory-only on legacy installs. The adapter phase must remove
- * those static imports (dynamic `import()` / `loadPackage`) and flip the
- * second test below; the modern CI cell additionally enforces
- * `scripts/check-no-static-nats` against the built dist (spec 001 section 6).
+ * The built-dist counterpart is `scripts/check-no-static-nats`, which fails
+ * on any module-scope driver require in the packaged output (spec 001
+ * section 6); the modern CI cell runs it green.
  */
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -19,22 +18,22 @@ import { join } from 'path';
 const srcRoot = join(__dirname, '..');
 const read = (rel: string) => readFileSync(join(srcRoot, rel), 'utf8');
 
-const STATIC_NATS_IMPORT =
-  /(?:from\s+['"]nats['"]|require\(\s*['"]nats['"]\s*\))/;
+const hasStaticNatsImport = (source: string) =>
+  source.split('\n').some(
+    (line) =>
+      !/^\s*import\s+type\b/.test(line) &&
+      /(?:from\s+['"]nats['"]|require\(\s*['"]nats['"]\s*\))/.test(line),
+  );
 
 describe('lazy driver loading (source-level guard)', () => {
   it.each([
     'driver/resolve-driver.ts',
+    'driver/nats-driver.ts',
     'utils/consumer-config.ts',
     'nats-jetstream.context.ts',
-  ])('driver-neutral module %s has no static nats import', (rel) => {
-    expect(read(rel)).not.toMatch(STATIC_NATS_IMPORT);
+    'client.ts',
+    'server.ts',
+  ])('module %s has no static nats import (import type only)', (rel) => {
+    expect(hasStaticNatsImport(read(rel))).toBe(false);
   });
-
-  it.each(['client.ts', 'server.ts'])(
-    'INTERIM: %s still statically imports nats (adapter phase removes this)',
-    (rel) => {
-      expect(read(rel)).toMatch(STATIC_NATS_IMPORT);
-    },
-  );
 });

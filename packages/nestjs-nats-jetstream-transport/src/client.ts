@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, ReadPacket, WritePacket } from '@nestjs/microservices';
 import {
   Codec,
@@ -9,6 +9,7 @@ import {
 } from 'nats';
 import { NATS_JETSTREAM_OPTIONS } from './constants';
 import { NatsJetStreamClientOptions } from './interfaces/nats-jetstream-client-options.interface';
+import { resolveNatsDriver } from './driver/resolve-driver';
 import { NatsJetStreamRecord } from './utils/nats-jetstream-record.builder';
 import { NatsRequestRecord } from './utils/nats-request-record-builder';
 
@@ -16,6 +17,7 @@ import { NatsRequestRecord } from './utils/nats-request-record-builder';
 export class NatsJetStreamClientProxy extends ClientProxy {
   private nc: NatsConnection;
   private codec: Codec<JSON>;
+  private readonly logger = new Logger(NatsJetStreamClientProxy.name);
 
   constructor(
     @Inject(NATS_JETSTREAM_OPTIONS) private options: NatsJetStreamClientOptions,
@@ -25,10 +27,14 @@ export class NatsJetStreamClientProxy extends ClientProxy {
   }
 
   async connect(): Promise<NatsConnection> {
+    const resolution = resolveNatsDriver(this.options.driver);
+    if (resolution.notice) {
+      this.logger.log(resolution.notice);
+    }
     if (!this.nc) {
       this.nc = await connect(this.options.connectionOptions);
       if (this.options.connectionOptions.connectedHook) {
-        this.options.connectionOptions.connectedHook(this.nc);
+        await this.options.connectionOptions.connectedHook(this.nc);
       }
     }
 

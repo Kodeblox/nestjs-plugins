@@ -16,6 +16,15 @@ jest.mock('nats', () => {
   return { ...actual, connect: jest.fn() };
 });
 
+jest.mock('./driver/resolve-driver', () => {
+  const actual = jest.requireActual('./driver/resolve-driver');
+  return { ...actual, resolveNatsDriver: jest.fn(actual.resolveNatsDriver) };
+});
+
+import { resolveNatsDriver } from './driver/resolve-driver';
+
+const resolveMock = resolveNatsDriver as unknown as jest.Mock;
+
 const codec = JSONCodec();
 const waitFor = async (cond: () => boolean, ms = 5000) => {
   const start = Date.now();
@@ -229,5 +238,65 @@ describe('NatsJetStreamServer (fake driver boundary)', () => {
     await new Promise<void>((res) => server.listen(res));
     await server.close();
     expect(fakeNc.drain).toHaveBeenCalledTimes(1);
+  });
+
+  it('awaits an async connectedHook before finishing listen()', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const server = makeServer({
+      connectionOptions: {
+        name: 'unit-server',
+        connectedHook: async () => {
+          await gate;
+        },
+      },
+    });
+    let called = false;
+    const listening = server.listen(() => {
+      called = true;
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(called).toBe(false);
+    release();
+    await listening;
+    expect(called).toBe(true);
+  });
+
+  it('propagates a rejecting connectedHook from listen()', async () => {
+    const server = makeServer({
+      connectionOptions: {
+        name: 'unit-server',
+        connectedHook: async () => {
+          throw new Error('hook boom');
+        },
+      },
+    });
+    await expect(server.listen(() => undefined)).rejects.toThrow('hook boom');
+  });
+
+  it('rejects listen() when driver resolution throws', async () => {
+    resolveMock.mockImplementationOnce(() => {
+      throw new Error('NATS driver mismatch (test)');
+    });
+    const server = makeServer({ driver: 'modern' });
+    await expect(server.listen(() => undefined)).rejects.toThrow(
+      'NATS driver mismatch (test)',
+    );
+  });
+
+  it('logs the both-drivers notice once from listen()', async () => {
+    resolveMock.mockReturnValueOnce({
+      driver: 'legacy',
+      legacyAvailable: true,
+      modernAvailable: true,
+      notice: 'Both drivers installed (test)',
+    });
+    const server = makeServer();
+    const logSpy = jest
+      .spyOn((server as any).logger, 'log')
+      .mockImplementation(() => undefined);
+    await new Promise<void>((res) => server.listen(res));
+    expect(logSpy).toHaveBeenCalledWith('Both drivers installed (test)');
+    logSpy.mockRestore();
   });
 });

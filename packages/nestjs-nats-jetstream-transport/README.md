@@ -74,18 +74,18 @@ import { NatsJetStreamTransport } from '@kodeblox/nestjs-nats-jetstream-transpor
     NatsJetStreamTransport.register({
       connectionOptions: {
         servers: 'nats://localhost:4222',
-        name: 'settlement-service-v1',
+        name: 'myservice-v1',
         reconnect: true,
       },
       consumerOptions: {
-        deliverGroup: 'softpay-service-group',
-        durable: 'softpay-service-durable',
-        deliverTo: 'softpay-service-deliver-to',
+        deliverGroup: 'myservice-group',
+        durable: 'myservice-durable',
+        deliverTo: 'myservice-messages',
         manualAck: true,
       },
       streamConfig: {
-        name: 'softpay-service',
-        subjects: ['softpay.*'],
+        name: 'mystream',
+        subjects: ['order.*'],
         num_replicas: 1,
       },
       driver: 'modern', // or omit: auto-resolves to modern when @nats-io/* is installed

@@ -59,6 +59,48 @@ default already does that when only `nats` is installed.
    single-element array) so it is reused — otherwise `listen()` throws
    telling you which remedy to apply.
 
+A complete Nest 12 server setup looks exactly like the Nest 11 one — same
+option names, plus the driver packages. This example mirrors a typical
+single-stream service (one `streamConfig` object, so no `stream` needed;
+compare with a Nest 11 config and only the installs differ):
+
+```typescript
+// Nest 12 app.module.ts
+import { Module } from '@nestjs/common';
+import { NatsJetStreamTransport } from '@kodeblox/nestjs-nats-jetstream-transport';
+
+@Module({
+  imports: [
+    NatsJetStreamTransport.register({
+      connectionOptions: {
+        servers: 'nats://localhost:4222',
+        name: 'settlement-service-v1',
+        reconnect: true,
+      },
+      consumerOptions: {
+        deliverGroup: 'softpay-service-group',
+        durable: 'softpay-service-durable',
+        deliverTo: 'softpay-service-deliver-to',
+        manualAck: true,
+      },
+      streamConfig: {
+        name: 'softpay-service',
+        subjects: ['softpay.*'],
+        num_replicas: 1,
+      },
+      driver: 'modern', // or omit: auto-resolves to modern when @nats-io/* is installed
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Two integration notes for real apps: if you validate options with Joi/Zod,
+allow the new `driver`, `stream`, and `startupPolicy` keys (fixed-shape
+schemas reject them otherwise). And handle the `startAllMicroservices()`
+rejection — since v3 a broker-down boot rejects instead of crashing the
+process, so wire it into your existing startup retry or exit path.
+
 Application-code changes are needed only where you touched driver
 surfaces that changed upstream:
 

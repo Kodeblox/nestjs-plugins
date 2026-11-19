@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.0.1](https://github.com/Kodeblox/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@3.0.0...@kodeblox/nestjs-nats-jetstream-transport@3.0.1) (2026-11-18)
+
+### Documentation
+
+* Complete Nest 12 server setup example in the README (mirrors a single-stream service 1:1 against the Nest 11 config), plus Joi/Zod `driver`/`stream`/`startupPolicy` key note and `startAllMicroservices()` rejection handling note.
+* Neutral project naming in examples and spec 002 (generic `myservice`/`mystream`/`order.*` names; de-branded app references).
+
 # [3.0.0](https://github.com/Kodeblox/nestjs-plugins/compare/@kodeblox/nestjs-nats-jetstream-transport@2.2.8...@kodeblox/nestjs-nats-jetstream-transport@3.0.0) (2026-11-18)
 
 ### ⚠ BREAKING CHANGES

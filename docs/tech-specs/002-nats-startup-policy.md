@@ -2,11 +2,10 @@
 
 - **Status:** Proposed
 - **Date:** 2026-11-18
-- **Source:** authored against the consuming app's installed copy and handed
-  to this repo as the library-side spec —
-  `apps/payment-notification-service/docs/nats-startup-policy-spec.md`
-  (softpayv2). App-side paths below (`packages/modules/src/jetstream.ts`,
-  `packages/modules/src/__test__/`) refer to that repo, not this one.
+- **Source:** authored against a consuming app’s installed copy and handed
+  to this repo as the library-side spec. App-side paths below
+  (`packages/modules/src/jetstream.ts`,
+  `packages/modules/src/__test__/`) refer to that app, not this one.
 - **Note on names:** the spec targets `@nestjs-plugins/nestjs-nats-jetstream-transport`
   v2.2.6 (the name under which the app installs the library) and nats.js
   2.29.3. All option/field names are proposals; this repo owns final naming.
@@ -109,7 +108,7 @@ Idempotency constraints for the implementer:
 
 ## 5. Migration note for our apps
 
-Our local workaround (on `dev` post-MR-493; app-side write-up at `apps/payment-notification-service/docs/nats-startup-resilience.md`) stays partially in place after upstream ships. Mapping of each local piece to its upstream counterpart:
+Our local workaround (on `dev` post-MR-493; app-side write-up at `docs/nats-startup-resilience.md` (in the consuming app)) stays partially in place after upstream ships. Mapping of each local piece to its upstream counterpart:
 
 - `ResilientNatsJetStreamServer` callback-routing hack (`packages/modules/src/jetstream.ts`, `listen` override routing connect/`setupStream`/binding failures to `callback(err)`) — DROPPABLE once upstream ships Part A. It exists only because upstream `listen()` never calls back with an error. Keep ours until the upgraded version is vendored; then delete the override and use the stock server.
 - App-side retry loop (`startWithRetry` / `startNatsMicroserviceWithRetry`, same file) — STAYS regardless. Upstream Part B covers in-transport retries, but our loop also owns the bootstrap ordering contract (HTTP binds independently of NATS, gRPC binds exactly once outside the loop). Even with upstream retries enabled, the loop is the belt-and-braces that keeps `app.listen()` reachable.
